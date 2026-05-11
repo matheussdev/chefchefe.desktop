@@ -1,7 +1,8 @@
 {
   "name": "chefchefe-desktop",
-  "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "productName": "ChefChefe POS",
+  "version": "1.0.1",
+  "description": "Com o ChefChefe POS, você pode gerenciar seu restaurante de forma eficiente e sem complicações. Nossa aplicação desktop oferece uma interface intuitiva para controlar pedidos, estoque, vendas e muito mais. Com recursos avançados e fácil integração, o ChefChefe POS é a solução ideal para otimizar as operações do seu negócio gastronômico.",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
@@ -14,11 +15,12 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "publish": "npm run build && electron-builder --publish always",
     "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux",
     "web:build": "vite build --config vite.config.web.ts",
     "web:dev": "vite --config vite.config.web.ts"
   },
@@ -28,11 +30,11 @@
     "antd": "^6.3.4",
     "axios": "^1.11.0",
     "dayjs": "^1.11.13",
+    "electron-log": "^5.4.3",
     "electron-updater": "^6.3.9",
     "lucide-react": "^1.7.0",
     "react-hotkeys-hook": "^5.2.1",
     "react-router-dom": "^7.8.0",
-    "react-shortcut": "^2.0.9",
     "styled-components": "^6.1.19"
   },
   "devDependencies": {
@@ -54,7 +56,10 @@
     "prettier": "^3.6.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "typescript": "5.5",
+    "typescript": "^6.0.3",
     "vite": "7"
+  },
+  "build": {
+    "appId": "com.chefchefe.pos"
   }
 }

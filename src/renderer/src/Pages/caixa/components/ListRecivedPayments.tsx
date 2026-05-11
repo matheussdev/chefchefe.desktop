@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect } from 'react'
-import { ArrowDownOutlined, ArrowUpOutlined, EditOutlined } from '@ant-design/icons'
 import { Button, Table, Tag, message} from 'antd'
 import api from '../../../services/api'
 import { darkTheme } from '../../../theme'
 import { formatCurrency } from '@renderer/utils/currency'
 import { Sale } from '@renderer/types'
 import dayjs from 'dayjs'
-import { Banknote, CreditCard, QrCode, Wallet } from 'lucide-react'
+import { ArrowDown, ArrowUp, Banknote, CreditCard, Edit2, QrCode, Wallet } from 'lucide-react'
 
 const paymentsMap = (method: string) => {
   switch (method) {
@@ -87,9 +86,9 @@ export const ListRecivedPayments: React.FC<ListRecivedPaymentsProps> = ({ cashie
           key: 'value_type',
           render: (amount) =>
             Number(amount) > 0 ? (
-              <ArrowDownOutlined style={{ color: darkTheme.token.colorPrimary }} />
+              <ArrowDown style={{ color: darkTheme.token.colorPrimary }} size={16} />
             ) : (
-              <ArrowUpOutlined style={{ color: 'red' }} />
+              <ArrowUp style={{ color: 'red' }} size={16} />
             )
         },
         {
@@ -131,7 +130,7 @@ export const ListRecivedPayments: React.FC<ListRecivedPaymentsProps> = ({ cashie
           title: '',
           width: '50px',
           key: 'action',
-          render: () => <Button icon={<EditOutlined />}></Button>
+          render: () => <Button icon={<Edit2 size={16} />}></Button>
         }
       ]}
       loading={loading}

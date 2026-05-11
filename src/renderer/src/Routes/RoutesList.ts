@@ -1,4 +1,3 @@
-import { ScheduleTwoTone } from '@ant-design/icons'
 import { BillsPage } from '@renderer/Pages/Bills'
 import { BillDetailPage } from '@renderer/Pages/Bills/bill'
 import { CashierPage } from '@renderer/Pages/caixa'
@@ -14,7 +13,6 @@ export const routes = [
     path: '/',
     element: HomePage,
     private: true,
-    icon: ScheduleTwoTone,
     title: 'Dashboard',
     showSidebar: true,
     show: true,
@@ -24,7 +22,6 @@ export const routes = [
     path: '/mesas',
     element: TablesPage,
     private: true,
-    icon: ScheduleTwoTone,
     title: 'Operação',
     showSidebar: true,
     show: true,
@@ -34,7 +31,6 @@ export const routes = [
     path: '/caixa',
     element: CashierPage,
     private: true,
-    icon: ScheduleTwoTone,
     title: 'Operação',
     showSidebar: true,
     show: true,
@@ -44,7 +40,6 @@ export const routes = [
     path: '/abrir-caixa',
     element: OpenCashierPage,
     private: true,
-    icon: ScheduleTwoTone,
     title: 'Abrir Caixa',
     showSidebar: true,
     show: true,
@@ -54,7 +49,6 @@ export const routes = [
     path: '/comandas',
     element: BillsPage,
     private: true,
-    icon: ScheduleTwoTone,
     title: 'Operação',
     showSidebar: true,
     show: true,
@@ -64,7 +58,6 @@ export const routes = [
     path: '/comandas/:id',
     element: BillDetailPage,
     private: true,
-    icon: ScheduleTwoTone,
     title: 'Operação',
     showSidebar: true,
     show: true,

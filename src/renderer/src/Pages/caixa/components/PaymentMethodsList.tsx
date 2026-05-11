@@ -1,13 +1,5 @@
-import {
-  CreditCardFilled,
-  CreditCardOutlined,
-  DollarCircleOutlined,
-  QrcodeOutlined,
-  TeamOutlined,
-  WalletFilled,
-  WalletTwoTone
-} from '@ant-design/icons'
-import { Card, Space, theme, List, Typography, Avatar, Flex } from 'antd'
+import { Banknote, CreditCard, QrCode, Wallet } from 'lucide-react'
+import { Card, theme, List, Typography, Avatar, Flex } from 'antd'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { PmStats } from '../../../types'
 import { currenyFormat } from '../../../utils'
@@ -17,42 +9,35 @@ const paymentsMap = (mehtod: string) => {
   switch (mehtod) {
     case 'CASH':
       return {
-        icon: <DollarCircleOutlined />,
+        icon: <Banknote size={25} />,
         color: 'green-7',
         backgroundColor: 'green-3',
         title: 'Dinheiro'
       }
     case 'CREDIT_CARD':
       return {
-        icon: <CreditCardOutlined />,
+        icon: <CreditCard size={25} />,
         color: 'yellow-7',
         backgroundColor: 'yellow-3',
         title: 'Cartão de Crédito'
       }
     case 'DEBIT_CARD':
       return {
-        icon: <CreditCardFilled />,
+        icon: <CreditCard size={25} />,
         color: 'orange-6',
         backgroundColor: 'orange-3',
         title: 'Cartão de Débito'
       }
     case 'PIX':
       return {
-        icon: <QrcodeOutlined />,
+        icon: <QrCode size={25} />,
         color: 'blue-6',
         backgroundColor: 'blue-3',
         title: 'Pix'
       }
-    case 'Conveniado':
-      return {
-        icon: <TeamOutlined />,
-        color: 'cyan-7',
-        backgroundColor: 'cyan-3',
-        title: 'Conveniado'
-      }
     default:
       return {
-        icon: <WalletFilled />,
+        icon: <Wallet size={25} />,
         color: 'purple-5',
         backgroundColor: 'purple-3',
         title: mehtod
@@ -68,28 +53,30 @@ export const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ cashierI
   const [payments, setPayments] = useState<PmStats[] | null>(null)
   const hasUpdated = useRef(false)
   const fetchPayments = useCallback((id: string) => {
-    api.get('/v1/desktop/payment-methods-stats/',{
-      params: {
-        cashier_id: id
-      }
-    }).then((response) => {
-      setPayments(
-        response.data.payment_method_stats.map((item: any) => ({
-          ...item,
-          average_amount: Math.round(
-            (item.total_amount /
-              response.data.payment_method_stats.reduce(
-                (acc: number, pm: any) => acc + pm.total_amount,
-                0
-              )) *
-              100
-          ),
-          avarage_count: Math.round(
-            (item.transaction_count / response.data.total_transactions) * 100
-          )
-        }))
-      )
-    })
+    api
+      .get('/v1/desktop/payment-methods-stats/', {
+        params: {
+          cashier_id: id
+        }
+      })
+      .then((response) => {
+        setPayments(
+          response.data.payment_method_stats.map((item: any) => ({
+            ...item,
+            average_amount: Math.round(
+              (item.total_amount /
+                response.data.payment_method_stats.reduce(
+                  (acc: number, pm: any) => acc + pm.total_amount,
+                  0
+                )) *
+                100
+            ),
+            avarage_count: Math.round(
+              (item.transaction_count / response.data.total_transactions) * 100
+            )
+          }))
+        )
+      })
   }, [])
   useEffect(() => {
     if (!hasUpdated.current && cashierId) {
@@ -103,15 +90,10 @@ export const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ cashierI
         width: '100%'
       }}
       title={
-        <Space style={{ margin: 0, padding: 0 }}>
-          <WalletTwoTone
-            twoToneColor={token.colorPrimary}
-            style={{
-              fontSize: '1.7rem'
-            }}
-          />
+        <Flex align="center" gap="0.5rem">
+          <Wallet size={20} />
           Forma de pagamento
-        </Space>
+        </Flex>
       }
     >
       <List

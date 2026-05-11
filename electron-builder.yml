@@ -1,23 +1,46 @@
-appId: com.electron.app
-productName: chefchefe-desktop
+appId: com.chefchefe.pos
+productName: ChefChefe POS
 directories:
+  output: release/${version}
   buildResources: build
+compression: maximum
+asar: true
 files:
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+
+  artifactName: ChefChefe-Setup-${version}.${ext}
+
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+
+  shortcutName: ChefChefe POS
+  uninstallDisplayName: ChefChefe POS
+
+  deleteAppDataOnUninstall: false
+
+  runAfterFinish: true
 asarUnpack:
   - resources/**
 win:
-  executableName: chefchefe-desktop
-nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
+  icon: build/icon.ico
+  executableName: ChefChefePOS
+  target:
+    - nsis
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
@@ -25,9 +48,12 @@ mac:
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  icon: build/icon.icns
+  hardenedRuntime: true
+  gatekeeperAssess: false
   notarize: false
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ChefChefe-${version}.${ext}
 linux:
   target:
     - AppImage
@@ -35,11 +61,12 @@ linux:
     - deb
   maintainer: electronjs.org
   category: Utility
+  icon: build/icon.png
 appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ChefChefe-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
+  provider: github
+  owner: matheussdev
+  repo: chefchefe.desktop
+  private: true

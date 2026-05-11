@@ -1,11 +1,4 @@
 import {
-  BankTwoTone,
-  CalendarOutlined,
-  InboxOutlined,
-  PrinterOutlined,
-  UserOutlined
-} from '@ant-design/icons'
-import {
   Button,
   Card,
   Flex,
@@ -24,6 +17,7 @@ import { Cashier } from '../../../types'
 import api from '../../../services/api'
 import { formatCurrency } from '@renderer/utils/currency'
 import dayjs from 'dayjs'
+import { Calendar, Inbox, Landmark, Printer, User } from 'lucide-react'
 const { Text, Title } = Typography
 
 interface ResumeCashierProps {
@@ -54,22 +48,20 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }
       }}
       title={
         <Space style={{ margin: 0, padding: 0 }}>
-          <BankTwoTone
-            twoToneColor={token.colorPrimary}
-            style={{
-              fontSize: '1.7rem'
-            }}
+          <Landmark
+            color={token.colorPrimary}
+            size={20}
           />
           Valor em caixa
         </Space>
       }
       extra={[
         <Space key="actions" size="small">
-          <Button icon={<PrinterOutlined />}>Relatório</Button>
+          <Button icon={<Printer size={16} />}>Relatório</Button>
           <Button
             danger
             type="primary"
-            icon={<InboxOutlined />}
+            icon={<Inbox size={16} />}
             onClick={() => setCancelModal(true)}
           >
             Fechar caixa
@@ -91,12 +83,12 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }
           {formatCurrency(Number(cashier?.current_value || 0))}
         </Title>
         <Flex gap={5} align="center" style={{ marginBottom: 5 }}>
-          <UserOutlined />
+          <User size={16} />
           <Text>{cashier?.opened_by_name}</Text>
         </Flex>
 
         <Flex gap={5} align="center">
-          <CalendarOutlined />
+          <Calendar size={16} />
           {dayjs(cashier?.created).format('DD/MM/YYYY HH:mm:ss')}
         </Flex>
       </Skeleton>
