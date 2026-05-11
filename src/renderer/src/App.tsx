@@ -1,0 +1,43 @@
+import { Navigation } from './Routes'
+import { AuthProvider } from './hooks/useAuth'
+import { ThemeProvider } from 'styled-components'
+import GlobalStyle from './theme/GlobalStyles'
+import { ConfigProvider } from 'antd'
+import pt_BR from 'antd/es/locale/pt_BR'
+import dayjs from 'dayjs'
+import ptBR from 'dayjs/locale/pt-br'
+import { useTheme } from './hooks/useTheme'
+import { BillProvider } from './hooks/useBills'
+import { CashierProvider } from './hooks/useCashiers'
+
+dayjs.locale(ptBR)
+
+function App(): React.JSX.Element {
+  const { selectedTheme, selectedAlgorithm } = useTheme()
+  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+
+  return (
+    <ConfigProvider
+      theme={{
+        token: {
+          ...selectedTheme.token
+        },
+        algorithm: selectedAlgorithm
+      }}
+      locale={pt_BR}
+    >
+      <ThemeProvider theme={selectedTheme}>
+        <GlobalStyle />
+        <AuthProvider>
+          <CashierProvider>
+            <BillProvider>
+              <Navigation />
+            </BillProvider>
+          </CashierProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ConfigProvider>
+  )
+}
+
+export default App
