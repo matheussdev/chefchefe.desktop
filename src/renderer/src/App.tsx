@@ -14,7 +14,11 @@ dayjs.locale(ptBR)
 
 function App(): React.JSX.Element {
   const { selectedTheme, selectedAlgorithm } = useTheme()
-  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  const isElectron = !!window.electron
+  if (isElectron) {
+    const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+    ipcHandle()
+  }
 
   return (
     <ConfigProvider
