@@ -1,6 +1,6 @@
 import { useBill } from '@renderer/hooks/useBills'
 import { Button, Card, Drawer, Flex, Form, message, Select, Tabs, Tag, Typography } from 'antd'
-import { ChevronLeft, FileDigit, Printer, Receipt } from 'lucide-react'
+import { ChevronLeft, FileDigit, Receipt } from 'lucide-react'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BillResum } from './components/BillResum'
@@ -10,7 +10,6 @@ import { BillItemsTable } from './components/BillItems'
 import { useHotkeys } from 'react-hotkeys-hook'
 import api from '@renderer/services/api'
 import { errorActions } from '@renderer/utils'
-import { printConfigPrinter } from '@renderer/utils/Printers'
 const { Text } = Typography
 export const BillDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -116,16 +115,6 @@ export const BillDetailPage: React.FC = () => {
               : bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Flex>
           <Button
-            style={{ marginLeft: 'auto' }}
-            icon={<Printer size={16} />}
-            onClick={async () => {
-              await printConfigPrinter('caixa')
-            }}
-            type="dashed"
-          >
-            Imprimir (P)
-          </Button>
-          <Button
             icon={<FileDigit size={16} />}
             onClick={() => {
               setUnifyDrawerOpen(true)
@@ -198,6 +187,25 @@ export const BillDetailPage: React.FC = () => {
           <BillResum bill={bill} loading={loadingBill} />
           {bill?.orders && bill.orders.length > 0 && bill.is_open && (
             <BillPriceResum
+              orders={
+                bill?.bill_group
+                  ? bill?.bill_group.flatMap((group) =>
+                      group.orders.flatMap((order) => {
+                        return {
+                          quantity: Number(order.quantity),
+                          name: order.product,
+                          price: Number(order.total_price)
+                        }
+                      })
+                    )
+                  : bill.orders.flatMap((order) => {
+                      return {
+                        quantity: Number(order.quantity),
+                        name: order.product,
+                        price: Number(order.total_price)
+                      }
+                    })
+              }
               bills={bill?.bill_group ? bill?.bill_group : [bill]}
               subtotal={
                 bill?.bill_group

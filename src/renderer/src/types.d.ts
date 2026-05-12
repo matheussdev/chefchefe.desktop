@@ -28,6 +28,13 @@ export interface Restaurant {
     position: number
     method: string
   }[]
+  address: string
+  address_number: string
+  neighborhood: string
+  city: string
+  state: string
+  postal_code: string
+  phone: string
 }
 
 export interface User {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Banknote, CheckCheck, CreditCard, DollarSign, QrCode, X } from 'lucide-react'
+import { Banknote, CheckCheck, CreditCard, DollarSign, Printer, QrCode, X } from 'lucide-react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 import {
@@ -23,6 +23,7 @@ import { Bill, BillGroup } from '@renderer/types'
 import { useCashier } from '@renderer/hooks/useCashiers'
 import api from '@renderer/services/api'
 import { useNavigate } from 'react-router-dom'
+import { printBillReceipt } from '@renderer/utils/Printers'
 const { Text } = Typography
 
 const getPaymentMethodIcon = (method: string): React.ReactNode => {
@@ -43,6 +44,11 @@ const getPaymentMethodIcon = (method: string): React.ReactNode => {
 interface BillPriceResumProps {
   subtotal: number
   bills: Bill[] | BillGroup[]
+  orders: {
+    quantity: number
+    name: string
+    price: number
+  }[]
   loading?: boolean
 }
 
@@ -151,17 +157,21 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, bills }) => {
           cashier: selectedCashier?.id,
           change_method: change >= 0 ? selectedChangeMethod : undefined
         }
-        api.post('/v1/desktop/finish-bills/', {
-          ...datasend
-        }).then(() => {
-          messageApi.success('Pagamento registrado com sucesso!')
-          navigate('/comandas')
-        }).catch((err) => {
-          errorActions(err)
-          messageApi.error(err.response?.data?.detail || 'Erro ao registrar pagamento')
-        }).finally(() => {
-          setLoadingFinish(false)
-        })
+        api
+          .post('/v1/desktop/finish-bills/', {
+            ...datasend
+          })
+          .then(() => {
+            messageApi.success('Pagamento registrado com sucesso!')
+            navigate('/comandas')
+          })
+          .catch((err) => {
+            errorActions(err)
+            messageApi.error(err.response?.data?.detail || 'Erro ao registrar pagamento')
+          })
+          .finally(() => {
+            setLoadingFinish(false)
+          })
       }}
     >
       {contextHolder}
@@ -372,7 +382,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, bills }) => {
   )
 }
 
-export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, loading, bills }) => {
+export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, loading, bills, orders }) => {
   const { restaurant } = useAuth()
   const [taxValue, setTaxValue] = React.useState(() => {
     const initialTaxValue = restaurant?.default_tip_value || 0
@@ -414,6 +424,62 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, loadin
   return (
     restaurant && (
       <>
+        <Button
+          style={{ marginLeft: 'auto' }}
+          icon={<Printer size={16} />}
+          block
+          onClick={async () => {
+            await printBillReceipt({
+              printerName: 'caixa',
+              bill: {
+                bill_number: bills.map((bill) => bill.number).join(', '),
+                table: bills.map((bill) => bill.table).join(', '),
+                subtotal,
+                tax: taxApplied ? taxValue : 0,
+                total: Math.round((subtotal + (taxApplied ? taxValue : 0)) * 100) / 100
+              },
+              items: orders.map((order) => ({
+                name: order.name,
+                quantity: order.quantity,
+                price: order.price
+              })),
+              restaurant: {
+                name: restaurant.name,
+                street: restaurant?.address,
+                city: restaurant?.city,
+                state: restaurant?.state,
+                zip: restaurant?.postal_code,
+                phone: restaurant?.phone
+              }
+            })
+
+            // bill: {
+            //   bill_number: string
+            //   table: string
+            //   subtotal: number
+            //   tax: number
+            //   total: number
+            // },
+
+            // items: {
+            //   name: string
+            //   quantity: number
+            //   price: number
+            // }[],
+
+            // restaurant: {
+            //   name: string
+            //   street: string
+            //   city: string
+            //   state: string
+            //   zip: string
+            //   phone: string
+            // }
+          }}
+          type="dashed"
+        >
+          Imprimir (P)
+        </Button>
         <Card
           styles={{
             body: {
