@@ -140,20 +140,32 @@ ipcMain.handle('shell:open-external', async (_e, url: string) => {
 })
 
 ipcMain.handle('print:receipt', async (_e, payload) => {
-  try {
-    await printThermalReceipt(payload)
+  // Criar uma nova janela do Electron para o conteúdo da impressão
+  let win = new BrowserWindow({ show: false })
+  win.loadURL(
+    `data:text/html;charset=utf-8,${encodeURIComponent(`
+      ${payload.html}
+  `)}`
+  )
 
-    return {
-      success: true
-    }
-  } catch (error) {
-    console.error(error)
+  // Imprimir quando estiver pronto
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.print(
+      {
+        silent: true, // isso mostrará a caixa de diálogo de impressão
+        printBackground: true,
+        deviceName: payload.printerName // se você souber o nome da impressora, pode definir aqui
+      },
+      (success, reason) => {
+        if (!success) {
+          console.log(`Falha na impressão: ${reason}`)
+        }
 
-    return {
-      success: false,
-      error: String(error)
-    }
-  }
+        // Fechar a janela após a impressão
+        win.close()
+      }
+    )
+  })
 })
 
 app.on('window-all-closed', () => {
