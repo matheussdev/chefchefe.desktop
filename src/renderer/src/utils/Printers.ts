@@ -43,8 +43,7 @@ export async function printConfigPrinter(printerName: string) {
         },
 
         {
-          value:
-            '--------------------------------'
+          value: '--------------------------------'
         }
       ]
     })
@@ -71,8 +70,29 @@ type ReceiptLine = {
     textAlign?: 'left' | 'center' | 'right'
     fontSize?: string
   }
-  tableHeader?: string[]
-  tableBody?: (string | number)[][]
+  tableHeader?: {
+    value?: string
+    type: 'text' | 'table'
+    style?: {
+      width?: number
+      border?: string
+      fontWeight?: string
+      textAlign?: 'left' | 'center' | 'right'
+      fontSize?: string
+    }
+  }[]
+  tableBody?: {
+    value?: string
+    type: 'text' | 'table'
+    style?: {
+      width?: number
+      border?: string
+      fontWeight?: string
+      textAlign?: 'left' | 'center' | 'right'
+      fontSize?: string
+      padding?: string | number
+    }
+  }[][]
   tableFooter?: string[]
   tableHeaderStyle?: {
     backgroundColor?: string
@@ -90,7 +110,7 @@ type ReceiptLine = {
 function lineSeparator() {
   const totalWidth = 62
   return {
-    type: 'text' as const,
+    type: 'text',
     value: '-'.repeat(totalWidth),
     style: {
       textAlign: 'center',
@@ -175,7 +195,7 @@ export async function printBillReceipt(payload: {
     }
   })
 
-  lines.push(lineSeparator())
+  lines.push(lineSeparator() as ReceiptLine)
 
   // COMANDA
   lines.push({
@@ -193,7 +213,7 @@ export async function printBillReceipt(payload: {
     value: `DATA: ${new Date().toLocaleString()}`
   })
 
-  lines.push(lineSeparator())
+  lines.push(lineSeparator() as ReceiptLine)
 
   // PRODUTOS
   lines.push({
@@ -211,24 +231,83 @@ export async function printBillReceipt(payload: {
   //   })
   // })
   lines.push({
-      type: 'table',
-      style: {
-        border: 'none'
+    type: 'table',
+    style: {
+      border: 'none'
+    },
+    // largura das colunas
+    tableHeader: [
+      {
+        type: 'text',
+        value: 'ITEM',
+        style: {
+          width: 0.75,
+          fontWeight: '700'
+        }
       },
-      // largura das colunas
-      tableHeader: [
+
+      {
+        type: 'text',
+        value: 'VALOR',
+        style: {
+          width: 0.25,
+          textAlign: 'right',
+          fontWeight: '700'
+        }
+      }
+    ],
+
+    tableBody: items.map((item) => [
+      {
+        type: 'text',
+
+        value: `${item.quantity}x ${item.name.length > 20 ? item.name.slice(0, 25) + '...' : item.name}`,
+
+        style: {
+          width: 0.75,
+          textAlign: 'left',
+          padding: '2px 0'
+        }
+      },
+
+      {
+        type: 'text',
+
+        value: money(item.price),
+
+        style: {
+          width: 0.25,
+          textAlign: 'right',
+          padding: '2px 0'
+        }
+      }
+    ]),
+    tableBodyStyle: {
+      border: 'none'
+    }
+  })
+
+  lines.push({
+    type: 'table',
+    style: {
+      border: '0px solid #fff'
+    },
+    tableBody: [
+      [
         {
           type: 'text',
-          value: 'ITEM',
+          value: 'Subtotal',
           style: {
             width: 0.75,
-            fontWeight: '700'
+            textAlign: 'left',
+            fontWeight: '700',
+            border: 'none',
+            padding: '2px 0'
           }
         },
-
         {
           type: 'text',
-          value: 'VALOR',
+          value: money(bill.subtotal),
           style: {
             width: 0.25,
             textAlign: 'right',
@@ -236,259 +315,325 @@ export async function printBillReceipt(payload: {
           }
         }
       ],
-
-      tableBody: items.map((item) => [
+      [
         {
           type: 'text',
+          value: 'Taxa de Serviço',
+          style: {
+            width: 0.75,
+            textAlign: 'left',
+            fontWeight: '700',
+            border: '0px solid #fff',
 
-          value: `${item.quantity}x ${item.name.length > 20 ? item.name.slice(0, 25) + '...' : item.name}`,
+            padding: '2px 0'
+          }
+        },
+        {
+          type: 'text',
+          value: money(bill.tax),
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0'
+          }
+        }
+      ],
+      [
+        {
+          type: 'text',
+          value: 'TOTAL',
+          style: {
+            width: 0.75,
+            textAlign: 'left',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0'
+          }
+        },
+        {
+          type: 'text',
+          value: money(bill.total),
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            fontWeight: '700',
+            border: '0px solid #fff',
+            padding: '2px 0'
+          }
+        }
+      ]
+    ],
+    tableBodyStyle: {
+      border: '0px solid #fff'
+    }
+  })
+  lines.push({
+    type: 'table',
+    style: {
+      border: '0px solid #fff'
+    },
+    tableBody: [
+      [
+        {
+          type: 'text',
+          value: '',
 
           style: {
             width: 0.75,
             textAlign: 'left',
+            fontWeight: '700',
+            border: 'none',
+
             padding: '2px 0'
           }
         },
-
         {
           type: 'text',
-
-          value: money(item.price),
-
+          value: ' ',
           style: {
             width: 0.25,
             textAlign: 'right',
+            fontWeight: '700'
+          }
+        }
+      ],
+      [
+        {
+          type: 'text',
+          value: '',
+          style: {
+            width: 0.75,
+            textAlign: 'left',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0'
+          }
+        },
+        {
+          type: 'text',
+          value: '  ',
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
             padding: '2px 0'
           }
         }
-      ]),
-      tableBodyStyle: {
-        border: 'none'
+      ],
+      [
+        {
+          type: 'text',
+          value: '',
+          style: {
+            width: 0.75,
+            textAlign: 'left',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0'
+          }
+        },
+        {
+          type: 'text',
+          value: '   ',
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            fontWeight: '700',
+            border: '0px solid #fff',
+            padding: '2px 0'
+          }
+        }
+      ],
+      [
+        {
+          type: 'text',
+          value: '',
+          style: {
+            width: 0.75,
+            textAlign: 'left',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0'
+          }
+        },
+        {
+          type: 'text',
+          value: '  ',
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0'
+          }
+        }
+      ],
+      [
+        {
+          type: 'text',
+          value: '',
+          style: {
+            width: 0.75,
+            textAlign: 'left',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0'
+          }
+        },
+        {
+          type: 'text',
+          value: '   ',
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            fontWeight: '700',
+            border: '0px solid #fff',
+            padding: '2px 0'
+          }
+        }
+      ]
+    ],
+    tableBodyStyle: {
+      border: '0px solid #fff'
+    }
+  })
+  await window.api.printReceipt({
+    printerName,
+    lines
+  })
+}
+
+export async function printOrderReceipt(payload: {
+  printerName: string
+  order: {
+    number_id: string
+    table?: string
+    identification?: string
+    bill_number: string
+    waiter: string
+    quantity: number
+    product_name: string
+    notes?: string
+    date: string
+  }
+  type: "first" | "reprint"
+}) {
+  const { printerName, order, type } = payload
+
+  const lines: ReceiptLine[] = []
+
+  // HEADER
+  lines.push({
+    type: 'text',
+    value: type === 'first' ? 'NOVO PEDIDO' : 'REIMPRESSÃO DE PEDIDO',
+    style: {
+      textAlign: 'center',
+      fontWeight: '700',
+      fontSize: '18px',
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Comanda: ${order.bill_number}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '700',
+      fontSize: '16px',
+    }
+  })
+
+  if (order.table) {
+    lines.push({
+    type: 'text',
+    value: `Mesa: ${order.table || order.identification || 'N/A'}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '700',
+      fontSize: '16px',
+    }
+  })
+  }
+
+  lines.push({
+    type: 'text',
+    value: `Pedido: ${order.number_id}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '700',
+      fontSize: '12px',
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Garçom: ${order.waiter}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '500',
+      fontSize: '12px',
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Data: ${new Date(order.date).toLocaleString()}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '500',
+      fontSize: '12px',
+    }
+  })
+
+  lines.push(lineSeparator() as ReceiptLine)
+
+  // PRODUTO
+  lines.push({
+    type: 'text',
+    value: `${order.quantity}x ${order.product_name}`,
+    style: {
+      textAlign: 'center',
+      fontWeight: '700',
+      fontSize: '20px',
+    }
+  })
+
+  if (order.notes) {
+    lines.push({
+      type: 'text',
+      value: `Observações: ${order.notes}`,
+      style: {
+        textAlign: 'center',
+        fontWeight: '500',
+        fontSize: '16px',
       }
     })
 
-  lines.push({
-    type: 'table',
-    style: {
-      border: '0px solid #fff'
-    },
-    tableBody: [[
-      {
-        type: 'text',
-        value: 'Subtotal',
-
-        style: {
-          width: 0.75,
-          textAlign: 'left',
-          fontWeight: '700',
-          border: 'none',
-
-    padding: '2px 0'
-        }
-      },
-      {
-        type: 'text',
-        value: money(bill.subtotal),
-        style: {
-          width: 0.25,
-          textAlign: 'right',
-          fontWeight: '700'
-        }
+    lines.push({
+      type: 'text',
+      value: '',
+      style: {
+        textAlign: 'center',
+        fontWeight: '500',
+        fontSize: '16px',
       }
-    ],
-    [
-      {
-        type: 'text',
-        value: 'Taxa de Serviço',
-        style: {
-          width: 0.75,
-          textAlign: 'left',
-          fontWeight: '700',
-          border: '0px solid #fff',
+    })
 
-    padding: '2px 0'
-        }
-      },
-      {
-        type: 'text',
-        value: money(bill.tax),
-        style: {
-          width: 0.25,
-          textAlign: 'right',
-          fontWeight: '700',
-          border: '0px solid #fff',
-
-    padding: '2px 0'
-        }
-      }
-    ],
-    [
-      {
-        type: 'text',
-        value: 'TOTAL',
-        style: {
-          width: 0.75,
-          textAlign: 'left',
-          fontWeight: '700',
-          border: '0px solid #fff',
-
-    padding: '2px 0'
-        }
-      },
-      {
-        type: 'text',
-        value: money(bill.total),
-        style: {
-          width: 0.25,
-          textAlign: 'right',
-          fontWeight: '700',
-          border: '0px solid #fff',
-    padding: '2px 0'
-        }
-      }
-    ],
-    ],
-    tableBodyStyle: {
-      border: '0px solid #fff'
-    }
-  })
-  lines.push({
-    type: 'table',
-    style: {
-      border: '0px solid #fff'
-    },
-    tableBody: [[
-      {
-        type: 'text',
-        value: '',
-
-        style: {
-          width: 0.75,
-          textAlign: 'left',
-          fontWeight: '700',
-          border: 'none',
-
-    padding: '2px 0'
-        }
-      },
-      {
-        type: 'text',
-        value: ' ',
-        style: {
-          width: 0.25,
-          textAlign: 'right',
-          fontWeight: '700'
-        }
-      }
-    ],
-    [
-      {
-        type: 'text',
-        value: '',
-        style: {
-          width: 0.75,
-          textAlign: 'left',
-          fontWeight: '700',
-          border: '0px solid #fff',
-
-    padding: '2px 0'
-        }
-      },
-      {
-        type: 'text',
-        value: '  ',
-        style: {
-          width: 0.25,
-          textAlign: 'right',
-          fontWeight: '700',
-          border: '0px solid #fff',
-
-    padding: '2px 0'
-        }
-      }
-    ],
-    [
-      {
-        type: 'text',
-        value: '',
-        style: {
-          width: 0.75,
-          textAlign: 'left',
-          fontWeight: '700',
-          border: '0px solid #fff',
-
-    padding: '2px 0'
-        }
-      },
-      {
-        type: 'text',
-        value: '   ',
-        style: {
-          width: 0.25,
-          textAlign: 'right',
-          fontWeight: '700',
-          border: '0px solid #fff',
-    padding: '2px 0'
-        }
-      }
-    ],
-    [
-      {
-        type: 'text',
-        value: '',
-        style: {
-          width: 0.75,
-          textAlign: 'left',
-          fontWeight: '700',
-          border: '0px solid #fff',
-
-    padding: '2px 0'
-        }
-      },
-      {
-        type: 'text',
-        value: '  ',
-        style: {
-          width: 0.25,
-          textAlign: 'right',
-          fontWeight: '700',
-          border: '0px solid #fff',
-
-    padding: '2px 0'
-        }
-      }
-    ],
-    [
-      {
-        type: 'text',
-        value: '',
-        style: {
-          width: 0.75,
-          textAlign: 'left',
-          fontWeight: '700',
-          border: '0px solid #fff',
-
-    padding: '2px 0'
-        }
-      },
-      {
-        type: 'text',
-        value: '   ',
-        style: {
-          width: 0.25,
-          textAlign: 'right',
-          fontWeight: '700',
-          border: '0px solid #fff',
-    padding: '2px 0'
-        }
-      }
-    ],
-    
-    ],
-    tableBodyStyle: {
-      border: '0px solid #fff'
-    }
-  })
+  }
+  lines.push(lineSeparator() as ReceiptLine)
+  lines.push(lineSeparator() as ReceiptLine)
+  lines.push(lineSeparator() as ReceiptLine)
   await window.api.printReceipt({
     printerName,
     lines

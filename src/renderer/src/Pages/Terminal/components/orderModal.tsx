@@ -15,6 +15,8 @@ import {
 import { ArrowDown, ArrowUp, Minus, Plus } from 'lucide-react'
 import api from '@renderer/services/api'
 import { currenyFormat } from '@renderer/utils'
+import { printOrderReceipt } from '@renderer/utils/Printers'
+import dayjs from 'dayjs'
 const { Text } = Typography
 interface OrderModalProps {
   selectedProduct: Product | null
@@ -116,6 +118,22 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             }))
         })
         .then((response) => {
+          const data = {
+            printerName: response.data?.printer_name || 'caixa',
+            order: {
+              number_id: response?.data?.number,
+              table: response?.data?.table_number,
+              identification: response?.data?.bill_identification,
+              bill_number: response?.data?.bill_number,
+              waiter: response?.data?.launched_by_name,
+              quantity: response?.data?.quantity,
+              product_name: response?.data?.product_name,
+              notes: response?.data?.notes,
+              date: dayjs(response?.data?.created).format('DD/MM/YYYY HH:mm:ss')
+            },
+            type: 'first' as "first" | "reprint"
+          }
+          printOrderReceipt(data)
           form?.current?.resetFields()
           setComplementsToAdd([])
           messageApi.success('Produto adicionado com sucesso')
@@ -198,7 +216,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                                 group: group.id,
                                 quantity: value ?? 0,
                                 group_name: group.name,
-                                complement_name: item.name,
+                                complement_name: item.name
                               }
                             ]
                           } else {
