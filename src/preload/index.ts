@@ -14,8 +14,7 @@ const api = Object.freeze({
 
   openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url),
 
-  printReceipt: (html: string, printerName?: string) =>
-    ipcRenderer.invoke('print:receipt', html, printerName)
+  printReceipt: (payload) => ipcRenderer.invoke('print:receipt', payload),
 })
 
 if (process.contextIsolated) {

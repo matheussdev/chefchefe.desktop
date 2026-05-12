@@ -1,82 +1,50 @@
-import escpos from 'escpos'
-import USB from 'escpos-usb'
-import Network from 'escpos-network'
-
-escpos.USB = USB
-escpos.Network = Network
-
-type ReceiptItem = {
-  name: string
-  qty: number
-  price: number
+import { PosPrinter, PosPrintOptions, PosPrintType } from 'electron-pos-printer'
+type ReceiptLine = {
+  type: PosPrintType
+  value: string
+  style?: {
+    fontWeight?: string
+    textAlign?: 'left' | 'center' | 'right'
+    fontSize?: string
+  }
 }
 
 type PrintPayload = {
-  items: ReceiptItem[]
-  total: number
-  printerType?: 'usb' | 'network'
-
-  ip?: string
-  port?: number
-
-  vendorId?: number
-  productId?: number
+  printerName?: string
+  lines: ReceiptLine[]
 }
 
-export async function printThermalReceipt(payload: PrintPayload) {
-  return new Promise((resolve, reject) => {
-    try {
-      let device
+export async function printThermalReceipt(
+  payload: PrintPayload
+) {
+  const data = payload.lines.map((line) => ({
+    type: 'text' as PosPrintType,
 
-      if (payload.printerType === 'network') {
-        device = new escpos.Network(
-          payload.ip || '192.168.0.100',
-          payload.port || 9100
-        )
-      } else {
-        device = new escpos.USB(
-          payload.vendorId,
-          payload.productId
-        )
-      }
+    value: line.value,
 
-      const printer = new escpos.Printer(device)
-
-      device.open((error) => {
-        if (error) {
-          reject(error)
-          return
-        }
-
-        printer
-          .align('CT')
-          .style('B')
-          .size(1, 1)
-          .text('CHEFCHEFE POS')
-          .text('------------------------------')
-          .align('LT')
-
-        payload.items.forEach((item) => {
-          printer.text(
-            `${item.qty}x ${item.name} - R$ ${item.price.toFixed(2)}`
-          )
-        })
-
-        printer
-          .text('------------------------------')
-          .align('RT')
-          .style('B')
-          .text(`TOTAL: R$ ${payload.total.toFixed(2)}`)
-          .feed(2)
-          .align('CT')
-          .text('Obrigado pela preferência!')
-          .cut()
-          .close()
-
-        resolve(true)
-      })
-    } catch (err) {
-      reject(err)
+    style: {
+      fontFamily: 'monospace',
+      fontSize: line.style?.fontSize || '12px',
+      fontWeight: line.style?.fontWeight || '400',
+      textAlign: line.style?.textAlign || 'left'
     }
-  })
+  }))
+
+  const options = {
+    preview: false,
+
+    silent: true,
+
+    margin: '0 0 0 0',
+
+    copies: 1,
+
+    printerName: payload.printerName,
+
+    timeOutPerLine: 400,
+
+    pageSize: '80mm'
+  } as PosPrintOptions
+
+  await PosPrinter.print(data, options)
 }

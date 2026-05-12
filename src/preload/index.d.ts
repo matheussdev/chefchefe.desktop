@@ -11,10 +11,22 @@ declare global {
 
       openExternal: (url: string) => Promise<void>
 
-      printReceipt: (
-        payload: string,
-        printerName: string
-      ) => Promise<{ success: boolean; error?: string }>
+      printReceipt: (payload: {
+        printerName?: string
+
+        lines: {
+          value: string
+
+          style?: {
+            fontWeight?: string
+            textAlign?: 'left' | 'center' | 'right'
+            fontSize?: string
+          }
+        }[]
+      }) => Promise<{
+        success: boolean
+        error?: string
+      }>
     }
   }
 }

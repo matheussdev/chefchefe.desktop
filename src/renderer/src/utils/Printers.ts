@@ -1,25 +1,84 @@
-import fs from 'fs'
-import { join } from 'path'
-
 export async function printConfigPrinter(
-  printerName: string,
+  printerName: string
 ) {
-  const templatePath = join(__dirname, '../templates/configprinter.html')
-
-  let html = fs.readFileSync(
-    templatePath,
-    'utf-8'
-  )
-
-  html = html
-    .replace('{{printerName}}', printerName)
   try {
-    await window.api.printReceipt(html, 'caixa')
-    console.log('Receipt printed successfully')
-    console.log(html)
-    return { success: true }
+    await window.api.printReceipt({
+      printerName,
+
+      lines: [
+        {
+          value: 'CHEFCHEFE POS',
+
+          style: {
+            textAlign: 'center',
+            fontWeight: '700',
+            fontSize: '18px'
+          }
+        },
+
+        {
+          value:
+            '--------------------------------'
+        },
+
+        {
+          value: `Teste da impressora ${printerName}`,
+
+          style: {
+            textAlign: 'center'
+          }
+        },
+
+        {
+          value: ''
+        },
+
+        {
+          value:
+            'Você instalou corretamente a impressora.',
+
+          style: {
+            textAlign: 'center'
+          }
+        },
+
+        {
+          value: ''
+        },
+
+        {
+          value:
+            '--------------------------------'
+        },
+
+        {
+          value: 'Peditz Soluções',
+
+          style: {
+            textAlign: 'center',
+            fontWeight: '700'
+          }
+        },
+
+        {
+          value: 'www.peditz.com.br',
+
+          style: {
+            textAlign: 'center'
+          }
+        }
+      ]
+    })
+
+    return {
+      success: true
+    }
   } catch (error) {
-    console.error('Error printing receipt:', error)
-    return { success: false, error: String(error) }
+    console.error(error)
+
+    return {
+      success: false,
+      error: String(error)
+    }
   }
 }
