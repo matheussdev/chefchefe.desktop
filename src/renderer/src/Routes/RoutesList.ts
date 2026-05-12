@@ -1,3 +1,4 @@
+import { BalancaPage } from '@renderer/Pages/Balanca/balanca'
 import { BillsPage } from '@renderer/Pages/Bills'
 import { BillDetailPage } from '@renderer/Pages/Bills/bill'
 import { CashierPage } from '@renderer/Pages/caixa'
@@ -82,5 +83,15 @@ export const routes = [
     showSidebar: true,
     show: true,
     especialIcon: true
-  }
+  },
+  {
+    path: '/balanca',
+    element: BalancaPage,
+    private: true,
+    icon: MonitorUp,
+    title: 'Balanca',
+    showSidebar: true,
+    show: true,
+    especialIcon: true
+  },
 ]

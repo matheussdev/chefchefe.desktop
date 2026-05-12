@@ -2,15 +2,15 @@ import React from 'react'
 import * as S from './styles'
 import { Button, Flex, Tooltip, Typography } from 'antd'
 import {
+  Armchair,
   BanknoteArrowDown,
   ChefHat,
   FileDigit,
   MonitorUp,
   Moon,
   RefreshCcw,
-  ShoppingBasket,
+  Scale,
   Sun,
-  Utensils
 } from 'lucide-react'
 import { useTheme } from '@renderer/hooks/useTheme'
 import { useNavigate } from 'react-router-dom'
@@ -53,14 +53,14 @@ const Menu = (): React.JSX.Element => {
       </Tooltip>
       <Tooltip title="Mesas">
         <Button
-          icon={<Utensils />}
+          icon={<Armchair />}
           onClick={() => navigate('/mesas')}
           shape="circle"
           size="large"
         />
       </Tooltip>
-      <Tooltip title="Vendas">
-        <Button icon={<ShoppingBasket />} shape="circle" size="large" />
+      <Tooltip title="Balança">
+        <Button icon={<Scale />} shape="circle" size="large" onClick={() => navigate('/balanca')} />
       </Tooltip>
       <Button
         icon={<RefreshCcw />}
