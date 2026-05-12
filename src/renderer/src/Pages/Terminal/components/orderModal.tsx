@@ -119,7 +119,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         })
         .then((response) => {
           const data = {
-            printerName: response.data?.printer_name || 'caixa',
+            printerName: response.data?.printer_name,
             order: {
               number_id: response?.data?.number,
               table: response?.data?.table_number,
@@ -133,7 +133,9 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             },
             type: 'first' as "first" | "reprint"
           }
-          printOrderReceipt(data)
+          if (response.data?.printer_name) {
+            printOrderReceipt(data)
+          }
           form?.current?.resetFields()
           setComplementsToAdd([])
           messageApi.success('Produto adicionado com sucesso')
