@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <title>Teste de impressão</title>
+  <style>
+    @page {
+      margin: 0mm 0mm;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      max-width: 70mm;
+    }
+
+    .title {
+      font-size: 1rem;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="title">Página de Teste da impressora {{printerName}}</div>
+  <p>------------------------------------------------</p>
+  <br />
+  <br />
+  <p class="title">Você instalou corretamente a impressora do {{printerName}}</p>
+  <br />
+  <br />
+  <p>------------------------------------------------</p>
+  <p style="text-align: center; font-weight: bold">Peditz Soluções</p>
+  <p style="text-align: center">www.peditz.com.br</p>
+</body>
+
+</html>

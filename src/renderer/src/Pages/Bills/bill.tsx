@@ -10,6 +10,7 @@ import { BillItemsTable } from './components/BillItems'
 import { useHotkeys } from 'react-hotkeys-hook'
 import api from '@renderer/services/api'
 import { errorActions } from '@renderer/utils'
+import { printConfigPrinter } from '@renderer/utils/Printers'
 const { Text } = Typography
 export const BillDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -118,19 +119,7 @@ export const BillDetailPage: React.FC = () => {
             style={{ marginLeft: 'auto' }}
             icon={<Printer size={16} />}
             onClick={async () => {
-              const html = `
-<html>
-  <body>
-    <h2>ChefChefe POS</h2>
-
-    <p>X-Burger - R$ 25</p>
-
-    <h3>Total: R$ 25</h3>
-  </body>
-</html>
-`
-
-              await window.api.printReceipt(html, 'caixa')
+              await printConfigPrinter('caixa')
             }}
             type="dashed"
           >
