@@ -54,7 +54,7 @@ export const BalancaPage: React.FC = () => {
               marginRight: '0.5rem'
             }}
           >
-            Balança - Comandas abertas
+            Balança - Comandas abertas 1
           </Text>
           <Button
             onClick={() => {
