@@ -1,7 +1,7 @@
 {
   "name": "chefchefe-desktop",
   "productName": "ChefChefe POS",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Com o ChefChefe POS, você pode gerenciar seu restaurante de forma eficiente e sem complicações. Nossa aplicação desktop oferece uma interface intuitiva para controlar pedidos, estoque, vendas e muito mais. Com recursos avançados e fácil integração, o ChefChefe POS é a solução ideal para otimizar as operações do seu negócio gastronômico.",
   "main": "./out/main/index.js",
   "author": "example.com",
