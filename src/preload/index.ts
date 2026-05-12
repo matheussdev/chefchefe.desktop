@@ -1,12 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-type ReceiptItem = {
-  name: string
-  qty: number
-  price: number
-}
-
 const api = Object.freeze({
   ping: () => ipcRenderer.invoke('ping'),
 
