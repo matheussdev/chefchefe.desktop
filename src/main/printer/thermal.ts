@@ -42,9 +42,8 @@ export async function printThermalReceipt(
     printerName: payload.printerName,
 
     timeOutPerLine: 400,
-
     pageSize: '80mm'
-  } as PosPrintOptions
+  } as unknown as PosPrintOptions
 
   await PosPrinter.print(data, options)
 }
