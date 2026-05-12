@@ -115,6 +115,7 @@ export const BillDetailPage: React.FC = () => {
               : bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Flex>
           <Button
+            style={{ marginLeft: 'auto' }}
             icon={<FileDigit size={16} />}
             onClick={() => {
               setUnifyDrawerOpen(true)

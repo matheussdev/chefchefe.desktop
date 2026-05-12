@@ -62,8 +62,6 @@ export async function printConfigPrinter(printerName: string) {
   }
 }
 
-import { PosPrinter } from 'electron-pos-printer'
-
 type ReceiptLine = {
   type: 'text'
   value: string
@@ -262,5 +260,8 @@ export async function printBillReceipt(payload: {
     }
   }
 
-  await PosPrinter.print(lines, options)
+  await window.api.printReceipt({
+    printerName,
+    lines
+  })
 }
