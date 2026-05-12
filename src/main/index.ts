@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { setupAutoUpdater } from './updater'
 import log from 'electron-log'
+import { printThermalReceipt } from './printer/thermal'
 log.initialize()
 
 process.on('uncaughtException', (error) => {
@@ -48,7 +49,7 @@ function createWindow(): void {
     icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: true,
+      sandbox: false,
       contextIsolation: true,
       nodeIntegration: false,
       webSecurity: true,
@@ -138,14 +139,22 @@ ipcMain.handle('shell:open-external', async (_e, url: string) => {
   }
 })
 
-ipcMain.handle(
-  'print:receipt',
-  async (_e, payload: { items: Array<{ name: string; qty: number; price: number }> }) => {
-    if (!Array.isArray(payload?.items)) throw new Error('Payload inválido')
-    // TODO: enviar para seu módulo ESC/POS aqui
-    return { ok: true }
+ipcMain.handle('print:receipt', async (_e, payload) => {
+  try {
+    await printThermalReceipt(payload)
+
+    return {
+      success: true
+    }
+  } catch (error) {
+    console.error(error)
+
+    return {
+      success: false,
+      error: String(error)
+    }
   }
-)
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

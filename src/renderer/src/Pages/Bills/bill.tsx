@@ -117,8 +117,22 @@ export const BillDetailPage: React.FC = () => {
           <Button
             style={{ marginLeft: 'auto' }}
             icon={<Printer size={16} />}
-            onClick={() => {
-              alert('Imprimir')
+            onClick={async () => {
+              await window.api.printReceipt({
+                printerType: 'network',
+
+                ip: '192.168.0.50',
+
+                items: [
+                  {
+                    name: 'X-Burger',
+                    qty: 2,
+                    price: 25
+                  }
+                ],
+
+                total: 50
+              })
             }}
             type="dashed"
           >
