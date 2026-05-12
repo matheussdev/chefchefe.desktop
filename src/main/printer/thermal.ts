@@ -18,9 +18,7 @@ export async function printThermalReceipt(
   payload: PrintPayload
 ) {
   const data = payload.lines.map((line) => ({
-    type: 'text' as PosPrintType,
-
-    value: line.value,
+    ...line,
 
     style: {
       fontFamily: 'Arial',
@@ -35,7 +33,9 @@ export async function printThermalReceipt(
 
     silent: true,
 
-    margin: '0 0 0 0',
+    margins: {
+		  marginType: "none"
+	  },
 
     copies: 1,
 

@@ -15,7 +15,7 @@ declare global {
         printerName?: string
 
         lines: {
-          value: string
+          value?: string
 
           style?: {
             fontWeight?: string
