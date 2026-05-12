@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import { LoginRoute } from './LoginRoute'
 import { LoginPage } from '../Pages/Login'
 import { PrivateRoute } from './PrivateRoute'
@@ -56,7 +56,7 @@ export const Navigation = (): React.JSX.Element => {
         <Route path="/login" element={<LoginRoute />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
-        <Route path="*" element={<>not found</>} />
+        <Route path="*" element={<Link to="/caixa">not found</Link>} />
       </Routes>
     </BrowserRouter>
   )
