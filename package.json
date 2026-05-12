@@ -1,7 +1,7 @@
 {
   "name": "chefchefe-desktop",
   "productName": "ChefChefe POS",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Com o ChefChefe POS, você pode gerenciar seu restaurante de forma eficiente e sem complicações. Nossa aplicação desktop oferece uma interface intuitiva para controlar pedidos, estoque, vendas e muito mais. Com recursos avançados e fácil integração, o ChefChefe POS é a solução ideal para otimizar as operações do seu negócio gastronômico.",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -19,7 +19,7 @@
     "dist:win": "npm run build && electron-builder --win",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:linux": "npm run build && electron-builder --linux",
-    "release": "npm run build && electron-builder --publish always",
+    "release": "yarn build && electron-builder --publish always",
     "postinstall": "electron-builder install-app-deps",
     "web:build": "vite build --config vite.config.web.ts",
     "web:dev": "vite --config vite.config.web.ts"
