@@ -7,29 +7,15 @@ type ReceiptItem = {
   price: number
 }
 
-type PrintReceiptPayload = {
-  items: ReceiptItem[]
-  total: number
-
-  printerType?: 'usb' | 'network'
-
-  ip?: string
-  port?: number
-
-  vendorId?: number
-  productId?: number
-}
-
 const api = Object.freeze({
   ping: () => ipcRenderer.invoke('ping'),
 
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
 
-  openExternal: (url: string) =>
-    ipcRenderer.invoke('shell:open-external', url),
+  openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url),
 
-  printReceipt: (payload: PrintReceiptPayload) =>
-    ipcRenderer.invoke('print:receipt', payload)
+  printReceipt: (html: string, printerName?: string) =>
+    ipcRenderer.invoke('print:receipt', html, printerName)
 })
 
 if (process.contextIsolated) {

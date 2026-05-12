@@ -11,26 +11,10 @@ declare global {
 
       openExternal: (url: string) => Promise<void>
 
-      printReceipt: (payload: {
-        items: {
-          name: string
-          qty: number
-          price: number
-        }[]
-
-        total: number
-
-        printerType?: 'usb' | 'network'
-
-        ip?: string
-        port?: number
-
-        vendorId?: number
-        productId?: number
-      }) => Promise<{
-        success: boolean
-        error?: string
-      }>
+      printReceipt: (
+        payload: string,
+        printerName: string
+      ) => Promise<{ success: boolean; error?: string }>
     }
   }
 }

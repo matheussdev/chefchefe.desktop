@@ -118,21 +118,19 @@ export const BillDetailPage: React.FC = () => {
             style={{ marginLeft: 'auto' }}
             icon={<Printer size={16} />}
             onClick={async () => {
-              await window.api.printReceipt({
-                printerType: 'network',
+              const html = `
+<html>
+  <body>
+    <h2>ChefChefe POS</h2>
 
-                ip: '192.168.0.50',
+    <p>X-Burger - R$ 25</p>
 
-                items: [
-                  {
-                    name: 'X-Burger',
-                    qty: 2,
-                    price: 25
-                  }
-                ],
+    <h3>Total: R$ 25</h3>
+  </body>
+</html>
+`
 
-                total: 50
-              })
+              await window.api.printReceipt(html, 'caixa')
             }}
             type="dashed"
           >
