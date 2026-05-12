@@ -568,6 +568,16 @@ export async function printOrderReceipt(payload: {
 
   lines.push({
     type: 'text',
+    value: `Garçom: ${order.waiter}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '500',
+      fontSize: '16px',
+    }
+  })
+
+  lines.push({
+    type: 'text',
     value: `Pedido: ${order.number_id}`,
     style: {
       textAlign: 'left',
@@ -576,15 +586,7 @@ export async function printOrderReceipt(payload: {
     }
   })
 
-  lines.push({
-    type: 'text',
-    value: `Garçom: ${order.waiter}`,
-    style: {
-      textAlign: 'left',
-      fontWeight: '500',
-      fontSize: '12px',
-    }
-  })
+
 
   lines.push({
     type: 'text',
@@ -601,7 +603,7 @@ export async function printOrderReceipt(payload: {
   // PRODUTO
   lines.push({
     type: 'text',
-    value: `${order.quantity}x ${order.product_name}`,
+    value: `${Number(order.quantity)}x ${order.product_name}`,
     style: {
       textAlign: 'center',
       fontWeight: '700',
