@@ -12,7 +12,7 @@ export async function printConfigPrinter(
           style: {
             textAlign: 'center',
             fontWeight: '700',
-            fontSize: '18px'
+            fontSize: '20px'
           }
         },
 
@@ -49,23 +49,6 @@ export async function printConfigPrinter(
         {
           value:
             '--------------------------------'
-        },
-
-        {
-          value: 'Peditz Soluções',
-
-          style: {
-            textAlign: 'center',
-            fontWeight: '700'
-          }
-        },
-
-        {
-          value: 'www.peditz.com.br',
-
-          style: {
-            textAlign: 'center'
-          }
         }
       ]
     })
