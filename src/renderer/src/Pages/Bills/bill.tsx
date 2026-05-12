@@ -194,7 +194,7 @@ export const BillDetailPage: React.FC = () => {
                       group.orders.flatMap((order) => {
                         return {
                           quantity: Number(order.quantity),
-                          name: order.product,
+                          name: order.product_name,
                           price: Number(order.total_price)
                         }
                       })

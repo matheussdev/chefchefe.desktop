@@ -135,7 +135,7 @@ export async function printBillReceipt(payload: {
     type: 'text',
     value: restaurant.street,
     style: {
-      textAlign: 'center'
+      textAlign: 'left'
     }
   })
 
@@ -143,7 +143,7 @@ export async function printBillReceipt(payload: {
     type: 'text',
     value: `${restaurant.city}/${restaurant.state}`,
     style: {
-      textAlign: 'center'
+      textAlign: 'left'
     }
   })
 
@@ -151,7 +151,7 @@ export async function printBillReceipt(payload: {
     type: 'text',
     value: restaurant.zip,
     style: {
-      textAlign: 'center'
+      textAlign: 'left'
     }
   })
 
@@ -159,7 +159,7 @@ export async function printBillReceipt(payload: {
     type: 'text',
     value: restaurant.phone,
     style: {
-      textAlign: 'center'
+      textAlign: 'left'
     }
   })
 
@@ -192,11 +192,20 @@ export async function printBillReceipt(payload: {
       fontWeight: '700'
     }
   })
-
+  // Header da tabela
+  lines.push({
+    type: 'text',
+    value: twoColumns('QTD  DESCRIÇÃO', 'VALOR'),
+    style: {
+      fontWeight: '700',
+      textAlign: 'left'
+    }
+  })
   items.forEach((item) => {
+    const truncateName = item.name.length > 20 ? item.name.slice(0, 17) + '...' : item.name
     lines.push({
       type: 'text',
-      value: twoColumns(`${item.quantity}x ${item.name}`, money(item.price))
+      value: twoColumns(`${item.quantity}x ${truncateName}`, money(item.price))
     })
   })
 
@@ -242,23 +251,6 @@ export async function printBillReceipt(payload: {
       fontSize: '10px'
     }
   })
-
-  const options = {
-    preview: false,
-
-    silent: true,
-
-    copies: 1,
-
-    printerName,
-
-    margin: '0 0 0 0',
-
-    pageSize: {
-      width: 200000,
-      height: 600000
-    }
-  }
 
   await window.api.printReceipt({
     printerName,

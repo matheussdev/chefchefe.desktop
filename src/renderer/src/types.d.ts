@@ -70,6 +70,7 @@ export interface Order {
   complements: Complement[]
   created: string
   bill_number: number
+  product_name: string
 }
 
 export interface BillGroup {
