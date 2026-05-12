@@ -9,6 +9,27 @@ const api = Object.freeze({
   openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url),
 
   printReceipt: (payload) => ipcRenderer.invoke('print:receipt', payload),
+
+  reloadApp: () => ipcRenderer.invoke('app:reload'),
+
+  onUpdaterChecking: (callback) =>
+  ipcRenderer.on('updater:checking', callback),
+
+onUpdaterAvailable: (callback) =>
+  ipcRenderer.on('updater:available', callback),
+
+onUpdaterProgress: (callback) =>
+  ipcRenderer.on('updater:progress', callback),
+
+onUpdaterDownloaded: (callback) =>
+  ipcRenderer.on('updater:downloaded', callback),
+
+onUpdaterError: (callback) =>
+  ipcRenderer.on('updater:error', callback),
+
+installUpdate: () =>
+  ipcRenderer.invoke('updater:install'),
+  
 })
 
 if (process.contextIsolated) {

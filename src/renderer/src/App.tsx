@@ -9,6 +9,7 @@ import ptBR from 'dayjs/locale/pt-br'
 import { useTheme } from './hooks/useTheme'
 import { BillProvider } from './hooks/useBills'
 import { CashierProvider } from './hooks/useCashiers'
+import { UpdaterModal } from './updateModal'
 
 dayjs.locale(ptBR)
 
@@ -32,6 +33,7 @@ function App(): React.JSX.Element {
     >
       <ThemeProvider theme={selectedTheme}>
         <GlobalStyle />
+        <UpdaterModal />
         <AuthProvider>
           <CashierProvider>
             <BillProvider>

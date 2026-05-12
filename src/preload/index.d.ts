@@ -7,6 +7,8 @@ declare global {
     api: {
       ping: () => Promise<string>
 
+      reloadApp: () => Promise<void>
+
       getAppVersion: () => Promise<string>
 
       openExternal: (url: string) => Promise<void>
@@ -27,6 +29,26 @@ declare global {
         success: boolean
         error?: string
       }>
+
+      onUpdaterChecking: (callback: () => void) => void
+
+onUpdaterAvailable: (
+  callback: (_: unknown, info: unknown) => void
+) => void
+
+onUpdaterProgress: (
+  callback: (_: unknown, progress: { percent: number }) => void
+) => void
+
+onUpdaterDownloaded: (
+  callback: () => void
+) => void
+
+onUpdaterError: (
+  callback: (_: unknown, error: string) => void
+) => void
+
+installUpdate: () => Promise<void>
     }
   }
 }

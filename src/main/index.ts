@@ -45,7 +45,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     title: 'ChefChefe',
-    // titleBarStyle: 'hiddenInset',
+    titleBarStyle: 'hiddenInset',
     icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -158,6 +158,15 @@ ipcMain.handle(
     }
   }
 )
+
+ipcMain.handle('app:reload', () => {
+  const win = BrowserWindow.getAllWindows()[0]
+
+  if (win) {
+    win.reload()
+  }
+})
+
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

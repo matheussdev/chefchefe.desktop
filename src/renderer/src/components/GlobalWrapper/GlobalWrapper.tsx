@@ -19,6 +19,7 @@ import { useCashier } from '@renderer/hooks/useCashiers'
 interface GlobalWrapperProps {
   children: React.ReactNode
 }
+import jsonPackage from '../../../../../package.json'
 const { Text, Title } = Typography
 
 const Menu = (): React.JSX.Element => {
@@ -63,7 +64,7 @@ const Menu = (): React.JSX.Element => {
       </Tooltip>
       <Button
         icon={<RefreshCcw />}
-        onClick={() => window.location.reload()}
+        onClick={async () => await window.api.reloadApp()}
         shape="circle"
         size="large"
         type="dashed"
@@ -83,6 +84,7 @@ export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
 }: GlobalWrapperProps): React.JSX.Element => {
   const { restaurant } = useAuth()
   const { selectedCashier } = useCashier()
+  const version = jsonPackage.version
   return (
     <S.Containter>
       <S.Navbar>
@@ -101,7 +103,7 @@ export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
                   type="secondary"
                   style={{ margin: 0, fontSize: '0.7rem', lineHeight: '0.7rem' }}
                 >
-                  Versão 1.0.0
+                  Versão {version}
                 </Text>
               </Flex>
             </Flex>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { HashRouter, Routes, Route, Link } from 'react-router-dom'
 import { LoginRoute } from './LoginRoute'
 import { LoginPage } from '../Pages/Login'
 import { PrivateRoute } from './PrivateRoute'
@@ -33,7 +33,7 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
 
 export const Navigation = (): React.JSX.Element => {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         {routes.map((route) => {
           if (route.private) {
@@ -58,6 +58,6 @@ export const Navigation = (): React.JSX.Element => {
         </Route>
         <Route path="*" element={<Link to="/caixa">not found</Link>} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
