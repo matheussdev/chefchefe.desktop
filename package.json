@@ -20,7 +20,7 @@
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:linux": "npm run build && electron-builder --linux",
     "release": "yarn build && electron-builder --publish always",
-    "release:win": "--publish always",
+    "release:win": "electron-builder --win --publish always",
     "release:mac": "electron-builder --mac --publish always",
     "release:linux": "electron-builder --linux --publish always",
     "postinstall": "electron-builder install-app-deps",

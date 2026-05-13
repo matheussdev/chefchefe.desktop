@@ -40,6 +40,14 @@ export function setupAutoUpdater() {
   })
 
   ipcMain.handle('updater:install', () => {
-    autoUpdater.quitAndInstall()
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.destroy()
+      }
+    })
+
+    setImmediate(() => {
+      autoUpdater.quitAndInstall(false, true)
+    })
   })
 }
