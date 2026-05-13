@@ -12,24 +12,28 @@ const api = Object.freeze({
 
   reloadApp: () => ipcRenderer.invoke('app:reload'),
 
-  onUpdaterChecking: (callback) =>
-  ipcRenderer.on('updater:checking', callback),
+  onUpdaterChecking: (callback) => ipcRenderer.on('updater:checking', callback),
 
-onUpdaterAvailable: (callback) =>
-  ipcRenderer.on('updater:available', callback),
+  onUpdaterAvailable: (callback) => ipcRenderer.on('updater:available', callback),
 
-onUpdaterProgress: (callback) =>
-  ipcRenderer.on('updater:progress', callback),
+  onUpdaterProgress: (callback) => ipcRenderer.on('updater:progress', callback),
 
-onUpdaterDownloaded: (callback) =>
-  ipcRenderer.on('updater:downloaded', callback),
+  onUpdaterDownloaded: (callback) => ipcRenderer.on('updater:downloaded', callback),
 
-onUpdaterError: (callback) =>
-  ipcRenderer.on('updater:error', callback),
+  onUpdaterError: (callback) => ipcRenderer.on('updater:error', callback),
 
-installUpdate: () =>
-  ipcRenderer.invoke('updater:install'),
-  
+  installUpdate: () => ipcRenderer.invoke('updater:install'),
+
+  listScalePorts: () => ipcRenderer.invoke('scale:list-ports'),
+
+  connectScale: (path: string) => ipcRenderer.invoke('scale:connect', path),
+
+  disconnectScale: () => ipcRenderer.invoke('scale:disconnect'),
+
+  requestWeight: () => ipcRenderer.invoke('scale:request-weight'),
+
+  onScaleWeight: (callback: (_: unknown, weight: number) => void) =>
+    ipcRenderer.on('scale:weight', callback)
 })
 
 if (process.contextIsolated) {
