@@ -80,11 +80,16 @@ export const TerminalSelectedPage: React.FC = () => {
   }
   const navigate = useNavigate()
 
-  useHotkeys(['q', 'p', 'u', 'n'], (_, handler) => {
+  useHotkeys(['q', 'r', 'e'], async (_, handler) => {
     switch (handler.hotkey) {
       case 'q':
         navigate(-1)
         break
+      case 'r':
+        await window.api.reloadApp()
+        break
+      case 'e':
+        navigate(`/comandas/${billId}`)
     }
   })
 

@@ -1,6 +1,6 @@
 import { useBill } from '@renderer/hooks/useBills'
 import { Button, Card, Drawer, Flex, Form, message, Select, Tabs, Tag, Typography } from 'antd'
-import { ChevronLeft, FileDigit, Receipt } from 'lucide-react'
+import { ChevronLeft, FileDigit, MonitorUp, Receipt } from 'lucide-react'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BillResum } from './components/BillResum'
@@ -51,19 +51,19 @@ export const BillDetailPage: React.FC = () => {
     }
   }, [getBill, id])
   const navigate = useNavigate()
-  useHotkeys(['q', 'p', 'u', 'n'], (_, handler) => {
+  useHotkeys(['q', 'u', 'n', 'f'], (_, handler) => {
     switch (handler.hotkey) {
       case 'q':
         navigate(-1)
-        break
-      case 'p':
-        alert('Print!')
         break
       case 'u':
         setUnifyDrawerOpen(true)
         break
       case 'n':
         alert('NF!')
+        break
+      case 'f':
+        navigate(`/terminal/${id}/`)
         break
     }
   })
@@ -116,6 +116,15 @@ export const BillDetailPage: React.FC = () => {
           </Flex>
           <Button
             style={{ marginLeft: 'auto' }}
+            icon={<MonitorUp size={16} />}
+            onClick={() => {
+              navigate(`/terminal/${id}/`)
+            }}
+            type="dashed"
+          >
+            Adicionar Pedido (F)
+          </Button>
+          <Button
             icon={<FileDigit size={16} />}
             onClick={() => {
               setUnifyDrawerOpen(true)

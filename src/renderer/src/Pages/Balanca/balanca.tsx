@@ -1,19 +1,15 @@
-import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
-import { Button, Flex, Modal, Typography } from 'antd'
-import { Plus } from 'lucide-react'
+import { Button, Card, Flex, Form, FormInstance, Input, Modal, Select } from 'antd'
+import { Weight } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { BillFormPage } from '../Bills/form'
-import { BillCard } from '@renderer/components/BillCard'
-const { Text } = Typography
+import { OrdersResum } from './components/ordersResum'
+import { Bill } from '@renderer/types'
 export const BalancaPage: React.FC = () => {
-  const { bills, fetchBills } = useBill()
+  const { bills, fetchBills, fetchBillById } = useBill()
   const hasUpdatedBills = useRef(false)
-  const [searchTerm, setSearchTerm] = useState('')
   const [openBillModal, setOpenBillModal] = useState(false)
-  const navigate = useNavigate()
-
+  const form = React.useRef<FormInstance>(null)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'n') {
@@ -32,6 +28,7 @@ export const BalancaPage: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [fetchBills])
+  const [bill, setBill] = useState<Bill | null>(null)
   return (
     <Flex
       style={{
@@ -47,26 +44,54 @@ export const BalancaPage: React.FC = () => {
         }}
         gap="1rem"
       >
-        <Flex wrap="wrap" gap="0.5rem" align="center" justify="space-between">
-          <Text
-            strong
-            style={{
-              marginRight: '0.5rem'
-            }}
+        <Flex style={{ width: '100%' }} gap="2rem" justify="center">
+          <Card style={{ width: '100%', maxWidth: '600px', height: 'fit-content' }} title="Balança">
+            <Form layout="vertical" ref={form}>
+              <Form.Item label="Produto">
+                <Select size="large" />
+              </Form.Item>
+              <Form.Item label="Comanda" name="bill_id">
+                <Select
+                  size="large"
+                  options={bills.map((bill) => ({
+                    label: `Comanda ${bill.number} - ${bill.table_number ? `Mesa ${bill.table_number}` : ''}`,
+                    value: bill.id,
+                    number: bill.number
+                  }))}
+                  showSearch={{
+                    optionFilterProp: 'number'
+                  }}
+                  onChange={(value) => {
+
+                    form.current?.getFieldInstance('quantity')?.focus()
+                    fetchBillById(value).then((data) => {
+                      setBill(data)
+                    })
+                  }}
+                />
+              </Form.Item>
+              <Form.Item label="Peso" name="quantity">
+                <Input size="large" prefix="Kg" type="number" step="0.001" />
+              </Form.Item>
+              <Form.Item>
+                <Button icon={<Weight />} size="large" type="primary" block>
+                  Enviar
+                </Button>
+              </Form.Item>
+            </Form>
+          </Card>
+          <Flex
+            vertical
+            style={{ minWidth: '400px', maxWidth: '600px' }}
+            gap="1rem"
+            align="start"
+            justify="start"
+            flex={1}
           >
-            Balança - Comandas abertas 1 agora vai
-          </Text>
-          <Button
-            onClick={() => {
-              setOpenBillModal(true)
-            }}
-            icon={<Plus size={16} />}
-            type="dashed"
-          >
-            Abrir comanda (N)
-          </Button>
+            {bill ? <OrdersResum loadingBill={false} bill={bill} /> : <span></span>}
+          </Flex>
         </Flex>
-        <div
+        {/* <div
           style={{
             width: '100%',
             height: 'fit-content',
@@ -87,7 +112,7 @@ export const BalancaPage: React.FC = () => {
             .map((bill, index) => (
               <BillCard key={index} bill={bill} onClick={() => navigate(`/terminal/${bill.id}`)} />
             ))}
-        </div>
+        </div> */}
       </Flex>
       <Modal
         open={openBillModal}
@@ -98,32 +123,18 @@ export const BalancaPage: React.FC = () => {
         <BillFormPage
           onSuccess={(bill) => {
             setOpenBillModal(false)
-            navigate(`/terminal/${bill.id}`)
+            fetchBills({
+              is_open: true
+            })
+            form.current?.setFieldsValue({
+              bill_id: bill.id
+            })
+            setTimeout(() => {
+              form.current?.getFieldInstance('quantity')?.focus()
+            }, 300)
           }}
         />
       </Modal>
-      {window.innerWidth > 845 && (
-        <Flex
-          vertical
-          style={{
-            width: '40%',
-            maxWidth: '300px',
-            minWidth: '270px'
-          }}
-        >
-          <SearchBox
-            placeholder="Nº da comanda"
-            srtartFocus
-            onSearch={(value) => {
-              setSearchTerm(value)
-              const bill = bills.find((bill) => String(bill.number) === value && bill.is_open)
-              if (bill) {
-                navigate(`/terminal/${bill.id}`)
-              }
-            }}
-          />
-        </Flex>
-      )}
     </Flex>
   )
 }

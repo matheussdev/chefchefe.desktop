@@ -45,7 +45,6 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     title: 'ChefChefe',
-    titleBarStyle: 'hiddenInset',
     icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

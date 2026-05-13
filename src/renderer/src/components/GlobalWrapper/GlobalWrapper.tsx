@@ -1,18 +1,15 @@
 import React from 'react'
 import * as S from './styles'
-import { Button, Flex, Tooltip, Typography } from 'antd'
+import { Alert, Button, Drawer, Flex, Form, Input, Tooltip, Typography } from 'antd'
 import {
   Armchair,
   BanknoteArrowDown,
   ChefHat,
   FileDigit,
   MonitorUp,
-  Moon,
   RefreshCcw,
-  Scale,
-  Sun,
+  Settings
 } from 'lucide-react'
-import { useTheme } from '@renderer/hooks/useTheme'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@renderer/hooks/useAuth'
 import { useCashier } from '@renderer/hooks/useCashiers'
@@ -20,10 +17,14 @@ interface GlobalWrapperProps {
   children: React.ReactNode
 }
 import jsonPackage from '../../../../../package.json'
+import { useHotkeys } from 'react-hotkeys-hook'
 const { Text, Title } = Typography
 
 const Menu = (): React.JSX.Element => {
-  const { themeMode, toggleTheme } = useTheme()
+  const [openConfig, setOpenConfig] = React.useState(false)
+  const [defaultOperatorCode, setDefaultOperatorCode] = React.useState(
+    localStorage.getItem('chefchefe@terminal-saved-code') || ''
+  )
   const navigate = useNavigate()
   return (
     <Flex align="center" gap={'0.5rem'}>
@@ -59,9 +60,9 @@ const Menu = (): React.JSX.Element => {
           size="large"
         />
       </Tooltip>
-      <Tooltip title="Balança">
+      {/* <Tooltip title="Balança">
         <Button icon={<Scale />} shape="circle" size="large" onClick={() => navigate('/balanca')} />
-      </Tooltip>
+      </Tooltip> */}
       <Button
         icon={<RefreshCcw />}
         onClick={async () => await window.api.reloadApp()}
@@ -69,12 +70,48 @@ const Menu = (): React.JSX.Element => {
         size="large"
         type="dashed"
       />
-      <Button
-        icon={themeMode === 'light' ? <Moon /> : <Sun />}
-        onClick={toggleTheme}
-        shape="circle"
-        size="large"
-      />
+      <Button icon={<Settings />} onClick={() => setOpenConfig(true)} shape="circle" size="large" />
+      <Drawer
+        title="Configurações"
+        placement="right"
+        onClose={() => setOpenConfig(false)}
+        open={openConfig}
+      >
+        {defaultOperatorCode && (
+          <Alert
+            type="success"
+            style={{ marginBottom: '1rem' }}
+            title={`Código de operador padrão configurado`}
+            action={
+              <Button
+                type="text"
+                onClick={() => {
+                  localStorage.removeItem('chefchefe@terminal-saved-code')
+                  setDefaultOperatorCode('')
+                }}
+              >
+                Remover
+              </Button>
+            }
+          />
+        )}
+        <Form
+          layout="vertical"
+          onFinish={(values) => {
+            localStorage.setItem('chefchefe@terminal-saved-code', values.defaultOperatorCode)
+            setDefaultOperatorCode(values.defaultOperatorCode)
+          }}
+        >
+          <Form.Item label="Código de operador padrão" name="defaultOperatorCode">
+            <Input size="large" placeholder="Código de operador padrão" />
+          </Form.Item>
+          <Form.Item>
+            <Button block type="primary" size="large" htmlType="submit">
+              Salvar
+            </Button>
+          </Form.Item>
+        </Form>
+      </Drawer>
     </Flex>
   )
 }
@@ -85,6 +122,17 @@ export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
   const { restaurant } = useAuth()
   const { selectedCashier } = useCashier()
   const version = jsonPackage.version
+  const navigate = useNavigate()
+  useHotkeys(['t', 'c'], (_, handler) => {
+    switch (handler.hotkey) {
+      case 't':
+        navigate('/terminal')
+        break
+      case 'c':
+        navigate('/comandas')
+        break
+    }
+  })
   return (
     <S.Containter>
       <S.Navbar>

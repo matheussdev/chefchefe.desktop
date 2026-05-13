@@ -382,7 +382,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, bills }) => {
   )
 }
 
-export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, loading, bills, orders }) => {
+export const BillPriceResum: React.FC<BillPriceResumProps> = ({
+  subtotal,
+  loading,
+  bills,
+  orders
+}) => {
   const { restaurant } = useAuth()
   const [taxValue, setTaxValue] = React.useState(() => {
     const initialTaxValue = restaurant?.default_tip_value || 0
@@ -398,10 +403,44 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, loadin
   const confirmButtonRef = React.useRef<HTMLButtonElement>(null)
   const [paymentModalVisible, setPaymentModalVisible] = React.useState(false)
   useHotkeys(
-    ['enter', 'numpad enter'],
-    () => {
-      if (!paymentModalVisible) {
-        confirmButtonRef.current?.focus()
+    ['p', 'enter', 'numpad enter'],
+    async (_, handler) => {
+      switch (handler.hotkey) {
+        case 'enter':
+          if (!paymentModalVisible) {
+            confirmButtonRef.current?.focus()
+          }
+          break
+        case 'numpad enter':
+          if (!paymentModalVisible) {
+            confirmButtonRef.current?.focus()
+          }
+          break
+        case 'p':
+          await printBillReceipt({
+            printerName: 'caixa',
+            bill: {
+              bill_number: bills.map((bill) => bill.number).join(', '),
+              table: bills.map((bill) => bill.table).join(', '),
+              subtotal,
+              tax: taxApplied ? taxValue : 0,
+              total: Math.round((subtotal + (taxApplied ? taxValue : 0)) * 100) / 100
+            },
+            items: orders.map((order) => ({
+              name: order.name,
+              quantity: order.quantity,
+              price: order.price
+            })),
+            restaurant: {
+              name: restaurant?.name || '',
+              street: restaurant?.address || '',
+              city: restaurant?.city || '',
+              state: restaurant?.state || '',
+              zip: restaurant?.postal_code || '',
+              phone: restaurant?.phone || ''
+            }
+          })
+          break
       }
     },
     {
@@ -445,36 +484,13 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, loadin
               })),
               restaurant: {
                 name: restaurant.name,
-                street: restaurant?.address,
-                city: restaurant?.city,
-                state: restaurant?.state,
-                zip: restaurant?.postal_code,
-                phone: restaurant?.phone
+                street: restaurant?.address || '',
+                city: restaurant?.city || '',
+                state: restaurant?.state || '',
+                zip: restaurant?.postal_code || '',
+                phone: restaurant?.phone || ''
               }
             })
-
-            // bill: {
-            //   bill_number: string
-            //   table: string
-            //   subtotal: number
-            //   tax: number
-            //   total: number
-            // },
-
-            // items: {
-            //   name: string
-            //   quantity: number
-            //   price: number
-            // }[],
-
-            // restaurant: {
-            //   name: string
-            //   street: string
-            //   city: string
-            //   state: string
-            //   zip: string
-            //   phone: string
-            // }
           }}
           type="dashed"
         >

@@ -24,13 +24,15 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
   useHotkeys(['f', 'r'], (_, handler) => {
     switch (handler.hotkey) {
       case 'f':
-        form.current?.getFieldInstance('search')?.focus()
+        setTimeout(() => {
+          form.current?.getFieldInstance('search')?.focus()
+        }, 100)
         break
       case 'r':
         window.location.reload()
         break
     }
-  })
+  }, { enableOnContentEditable: false , keydown: false, keyup: true})
   useEffect(() => {
     setTimeout(() => {
       if (srtartFocus) {

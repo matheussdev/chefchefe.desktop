@@ -62,6 +62,17 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
             Comanda {bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Text>
         </Skeleton>
+        <Button
+          onClick={() => {
+            navigate(`/comandas/${bill?.id}`)
+          }}
+          type="primary"
+          style={{
+            marginLeft: 'auto'
+          }}
+        >
+          Finalizar Comanda (e)
+        </Button>
       </Flex>
       <Table
         loading={loadingProducts || loadingBill}
@@ -104,6 +115,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
             title: 'Produto',
             dataIndex: 'name',
             key: 'name',
+            ellipsis: true,
             render: (value, record, index) => (
               <Button
                 type="text"

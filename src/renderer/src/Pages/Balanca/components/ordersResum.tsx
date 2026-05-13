@@ -24,8 +24,11 @@ export const OrdersResum: React.FC<OrdersResumProps> = ({ loadingBill, bill }) =
       dataSource={bill?.orders || []}
       pagination={false}
       virtual
+      style={{
+        width: '100%',
+      }}
       scroll={{
-        y: window.innerHeight - 476
+        y: window.innerHeight - 250
       }}
       columns={[
         {
@@ -39,7 +42,8 @@ export const OrdersResum: React.FC<OrdersResumProps> = ({ loadingBill, bill }) =
           title: 'produto',
           dataIndex: 'product_name',
           key: 'product',
-          minWidth: 150
+          minWidth: 150,
+          ellipsis: true
         },
         {
           title: 'total',

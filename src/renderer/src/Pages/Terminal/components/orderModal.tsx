@@ -17,6 +17,7 @@ import api from '@renderer/services/api'
 import { currenyFormat } from '@renderer/utils'
 import { printOrderReceipt } from '@renderer/utils/Printers'
 import dayjs from 'dayjs'
+import { brlToNumber, formatToKilos } from '@renderer/utils/currency'
 const { Text } = Typography
 interface OrderModalProps {
   selectedProduct: Product | null
@@ -106,10 +107,12 @@ export const OrderModal: React.FC<OrderModalProps> = ({
     (values: ProductToAdd) => {
       if (loadingAdd) return
       setLoadingAdd(true)
+      console.log('values', values)
       api
         .post('v1/desktop/orders/', {
           ...values,
           code: savedCode || values.code,
+          quantity: brlToNumber(values.quantity.toString()),
           complements: complementsToAdd
             .filter((c) => c.quantity > 0)
             .map((c) => ({
@@ -131,7 +134,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               notes: response?.data?.notes,
               date: dayjs(response?.data?.created).format('DD/MM/YYYY HH:mm:ss')
             },
-            type: 'first' as "first" | "reprint"
+            type: 'first' as 'first' | 'reprint'
           }
           if (response.data?.printer_name) {
             printOrderReceipt(data)
@@ -259,9 +262,9 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         </Form.Item>
         <Flex style={{ width: '100%' }} gap="1rem" wrap="wrap">
           <Form.Item
-            label="Qantidade"
+            label={selectedProduct?.sell_type === 'UN' ? 'Quantidade' : 'Peso'}
             name="quantity"
-            initialValue={1}
+            initialValue={selectedProduct?.sell_type === 'UN' ? 1 : undefined}
             required
             rules={[
               {
@@ -287,8 +290,15 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             ) : (
               <Input
                 size="large"
-                placeholder="Quantidade"
-                type="number"
+                suffix="Kg"
+                placeholder="0,000 Kg"
+                type="text"
+                onChange={(e) => {
+                  const value = formatToKilos(e.target.value)
+                  form?.current?.setFieldsValue({
+                    quantity: value
+                  })
+                }}
                 onPressEnter={(e) => {
                   e.preventDefault()
                   if (!savedCode) {
@@ -349,6 +359,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                   quantityElement?.focus()
                 }
               }}
+              loading={loadingAdd}
               disabled={disabled_to_add}
             >
               Adicionar

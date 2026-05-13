@@ -29,6 +29,27 @@ export function formatToBRL(value: string): string {
   }).format(floatNumber).replace('R$', '').trim()
 }
 
+export function formatToKilos(value: string): string {
+  // Limpa os caracteres que não são números ou vírgula
+  console.log('value', value)
+  const onlyNumbers = value?.replace(/\D+/g, '')
+  console.log('onlyNumbers', onlyNumbers)
+  const numberValue = parseInt(onlyNumbers, 10) || 0
+  console.log('numberValue', numberValue)
+  // Divide por 1000 para obter o valor em gramas
+  const floatNumber = numberValue / 1000
+  console.log('floatNumber', floatNumber)
+
+  // Formata para uma string com até 3 casas decimais, usando vírgula como separador decimal
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3
+  }).format(floatNumber).replace('R$', '').trim()
+}
+
+
 export function brlToNumber(value: string): number {
   // Remove o prefixo R$, espaços e outros caracteres não-numéricos, e substitui vírgula por ponto
   const sanitizedValue = value.replace(/R\$\s?|[^0-9,]/g, '').replace(',', '.')
