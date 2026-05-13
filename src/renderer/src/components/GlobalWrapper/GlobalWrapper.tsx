@@ -1,11 +1,12 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import * as S from './styles'
-import { Alert, Button, Drawer, Flex, Form, Input, Tooltip, Typography } from 'antd'
+import { Alert, Button, Drawer, Flex, Form, Input, message, Select, Switch, Tooltip, Typography } from 'antd'
 import {
   Armchair,
   BanknoteArrowDown,
   ChefHat,
   FileDigit,
+  LogOut,
   MonitorUp,
   RefreshCcw,
   Settings
@@ -18,6 +19,7 @@ interface GlobalWrapperProps {
 }
 import jsonPackage from '../../../../../package.json'
 import { useHotkeys } from 'react-hotkeys-hook'
+import { logout } from '@renderer/services/auth'
 const { Text, Title } = Typography
 
 const Menu = (): React.JSX.Element => {
@@ -26,8 +28,26 @@ const Menu = (): React.JSX.Element => {
     localStorage.getItem('chefchefe@terminal-saved-code') || ''
   )
   const navigate = useNavigate()
+  const [ports, setPorts] = useState<
+    {
+      path: string
+      manufacturer?: string
+    }[]
+  >([])
+
+  const [selectedPort, setSelectedPort] = useState<string>()
+
+  useEffect(() => {
+    window.api.listScalePorts().then(setPorts)
+
+    // window.api.onScaleWeight((_, weight) => {
+    //   form.current?.setFieldValue('quantity', weight)
+    // })
+  }, [])
+  const [messageApi, contextHolder] = message.useMessage()
   return (
     <Flex align="center" gap={'0.5rem'}>
+      {contextHolder}
       <Tooltip title="Caixa">
         <Button
           icon={<BanknoteArrowDown />}
@@ -98,12 +118,79 @@ const Menu = (): React.JSX.Element => {
         <Form
           layout="vertical"
           onFinish={(values) => {
-            localStorage.setItem('chefchefe@terminal-saved-code', values.defaultOperatorCode)
-            setDefaultOperatorCode(values.defaultOperatorCode)
+            if (values.defaultOperatorCode) {
+              localStorage.setItem('chefchefe@terminal-saved-code', values.defaultOperatorCode)
+              setDefaultOperatorCode(values.defaultOperatorCode)
+            }
+            if (values.printServer) {
+              localStorage.setItem('chefchefe@print-server-enabled', 'true')
+            } else {
+              localStorage.removeItem('chefchefe@print-server-enabled')
+            }
+            if (values.printTimeout) {
+              localStorage.setItem('chefchefe@print-timeout', values.printTimeout)
+            } else {
+              localStorage.removeItem('chefchefe@print-timeout')
+            }
+            if (values.idPc) {
+              localStorage.setItem('chefchefe@id-pc', values.idPc)
+            } else {
+              localStorage.removeItem('chefchefe@id-pc')
+            }
+            if (values.apiBaseUrl) {
+              localStorage.setItem('chefchefe@api-base-url', values.apiBaseUrl)
+            } else {
+              localStorage.removeItem('chefchefe@api-base-url')
+            }
+            messageApi.success('Configurações salvas com sucesso!')
+            window.api.reloadApp()
           }}
         >
           <Form.Item label="Código de operador padrão" name="defaultOperatorCode">
             <Input size="large" placeholder="Código de operador padrão" />
+          </Form.Item>
+          <Form.Item
+            label="ID_PC"
+            name="idPc"
+            initialValue={localStorage.getItem('chefchefe@id-pc') || ''}
+          >
+            <Input size="large" placeholder="ID_PC" />
+          </Form.Item>
+          <Form.Item
+            label="Servidor de impressão"
+            name="printServer"
+            valuePropName="checked"
+            initialValue={localStorage.getItem('chefchefe@print-server-enabled') === 'true'}
+          >
+            <Switch />
+          </Form.Item>
+          <Form.Item
+            label="Tempo de impressão (segundos)"
+            name="printTimeout"
+            initialValue={localStorage.getItem('chefchefe@print-timeout') || '5'}
+          >
+            <Input size="large" placeholder="Tempo de impressão" type="number" />
+          </Form.Item>
+          <Form.Item
+            label="Base URL da API"
+            name="apiBaseUrl"
+            initialValue={localStorage.getItem('chefchefe@api-base-url') || 'http://localhost:8001/api'}
+          >
+            <Input size="large" placeholder="Base URL da API" />
+          </Form.Item>
+          <Form.Item label="Porta da balança">
+            <Select
+              size="large"
+              value={selectedPort}
+              onChange={async (value) => {
+                setSelectedPort(value)
+                await window.api.connectScale(value)
+              }}
+              options={ports.map((port) => ({
+                label: `${port.path} - ${port.manufacturer || 'Desconhecido'}`,
+                value: port.path
+              }))}
+            />
           </Form.Item>
           <Form.Item>
             <Button block type="primary" size="large" htmlType="submit">
@@ -111,6 +198,18 @@ const Menu = (): React.JSX.Element => {
             </Button>
           </Form.Item>
         </Form>
+        <Button
+          icon={<LogOut />}
+          onClick={() => {
+            logout()
+            window.api.reloadApp()
+          }}
+          block
+          style={{ marginTop: 'auto' }}
+          size="large"
+        >
+          Sair
+        </Button>
       </Drawer>
     </Flex>
   )

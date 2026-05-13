@@ -32,23 +32,30 @@ declare global {
 
       onUpdaterChecking: (callback: () => void) => void
 
-onUpdaterAvailable: (
-  callback: (_: unknown, info: unknown) => void
-) => void
+      onUpdaterAvailable: (callback: (_: unknown, info: unknown) => void) => void
 
-onUpdaterProgress: (
-  callback: (_: unknown, progress: { percent: number }) => void
-) => void
+      onUpdaterProgress: (callback: (_: unknown, progress: { percent: number }) => void) => void
 
-onUpdaterDownloaded: (
-  callback: () => void
-) => void
+      onUpdaterDownloaded: (callback: () => void) => void
 
-onUpdaterError: (
-  callback: (_: unknown, error: string) => void
-) => void
+      onUpdaterError: (callback: (_: unknown, error: string) => void) => void
 
-installUpdate: () => Promise<void>
+      installUpdate: () => Promise<void>
+
+      listScalePorts: () => Promise<
+        {
+          path: string
+          manufacturer?: string
+        }[]
+      >
+
+      connectScale: (path: string) => Promise<void>
+
+      disconnectScale: () => Promise<void>
+
+      requestWeight: () => Promise<void>
+
+      onScaleWeight: (callback: (_: unknown, weight: number) => void) => void
     }
   }
 }

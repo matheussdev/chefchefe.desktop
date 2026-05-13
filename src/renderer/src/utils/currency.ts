@@ -31,14 +31,10 @@ export function formatToBRL(value: string): string {
 
 export function formatToKilos(value: string): string {
   // Limpa os caracteres que não são números ou vírgula
-  console.log('value', value)
   const onlyNumbers = value?.replace(/\D+/g, '')
-  console.log('onlyNumbers', onlyNumbers)
   const numberValue = parseInt(onlyNumbers, 10) || 0
-  console.log('numberValue', numberValue)
   // Divide por 1000 para obter o valor em gramas
   const floatNumber = numberValue / 1000
-  console.log('floatNumber', floatNumber)
 
   // Formata para uma string com até 3 casas decimais, usando vírgula como separador decimal
   return new Intl.NumberFormat('pt-BR', {

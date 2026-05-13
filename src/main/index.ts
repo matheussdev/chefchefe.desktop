@@ -5,6 +5,12 @@ import icon from '../../resources/icon.png?asset'
 import { setupAutoUpdater } from './updater'
 import log from 'electron-log'
 import { printThermalReceipt } from './printer/thermal'
+import {
+  listScalePorts,
+  connectScale,
+  disconnectScale,
+  requestWeight
+} from './services/scale'
 log.initialize()
 
 process.on('uncaughtException', (error) => {
@@ -165,6 +171,35 @@ ipcMain.handle('app:reload', () => {
     win.reload()
   }
 })
+
+
+ipcMain.handle(
+  'scale:list-ports',
+  async () => {
+    return await listScalePorts()
+  }
+)
+
+ipcMain.handle(
+  'scale:connect',
+  async (_, path: string) => {
+    return await connectScale(path)
+  }
+)
+
+ipcMain.handle(
+  'scale:disconnect',
+  async () => {
+    return await disconnectScale()
+  }
+)
+
+ipcMain.handle(
+  'scale:request-weight',
+  async () => {
+    return await requestWeight()
+  }
+)
 
 
 app.on('window-all-closed', () => {

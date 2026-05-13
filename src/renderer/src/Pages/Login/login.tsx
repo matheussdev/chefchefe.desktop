@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useState } from 'react'
-import { Button, Form, Input, message, Card, Flex, Typography } from 'antd'
+import { Button, Form, Input, message, Card, Flex, Typography, FloatButton, Modal } from 'antd'
 import { useAuth } from '../../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
-import { ChefHat } from 'lucide-react'
+import { ChefHat, Settings } from 'lucide-react'
 import styled from 'styled-components'
 import { LoginParams } from '@renderer/types'
 import { getRestaurantToken } from '@renderer/services/auth'
@@ -44,10 +44,44 @@ export const LoginPage: React.FC = () => {
     },
     [login, navigate, messageApi]
   )
-
+  const [configModalOpen, setConfigModalOpen] = useState(false)
   return (
     <div style={{ height: '100vh', display: 'flex' }}>
       {contextHolder}
+      <FloatButton onClick={() => setConfigModalOpen(true)} icon={<Settings />}></FloatButton>
+      <Modal
+        title="Configurações"
+        open={configModalOpen}
+        onCancel={() => setConfigModalOpen(false)}
+        footer={null}
+      >
+        <Form
+          layout="vertical"
+          onFinish={(values) => {
+            if (values.apiUrl) {
+              localStorage.setItem('chefchefe@api-base-url', values.apiUrl)
+            } else {
+              localStorage.removeItem('chefchefe@api-base-url')
+            }
+            window.api.reloadApp()
+          }}
+        >
+          <Form.Item
+            label="Url da API"
+            name="apiUrl"
+            initialValue={
+              localStorage.getItem('chefchefe@api-base-url') || 'http://localhost:8001/api'
+            }
+          >
+            <Input size="large" placeholder="Url da API" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Salvar e recarregar
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
       <Flex
         flex={1}
         align="center"
