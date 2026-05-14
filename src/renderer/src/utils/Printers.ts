@@ -79,6 +79,8 @@ type ReceiptLine = {
       fontWeight?: string
       textAlign?: 'left' | 'center' | 'right'
       fontSize?: string
+      padding?: string | number
+      paddingRight?: string | number
     }
   }[]
   tableBody?: {
@@ -90,7 +92,8 @@ type ReceiptLine = {
       fontWeight?: string
       textAlign?: 'left' | 'center' | 'right'
       fontSize?: string
-      padding?: string | number
+      padding?: string | number,
+      paddingRight?: string | number
     }
   }[][]
   tableFooter?: string[]
@@ -248,7 +251,7 @@ export async function printBillReceipt(payload: {
         value: 'ITEM',
         style: {
           width: 0.75,
-          fontWeight: '700'
+          fontWeight: '700',
         }
       },
 
@@ -258,7 +261,8 @@ export async function printBillReceipt(payload: {
         style: {
           width: 0.25,
           textAlign: 'right',
-          fontWeight: '700'
+          fontWeight: '700',
+          paddingRight: '10px'
         }
       }
     ],
@@ -284,7 +288,8 @@ export async function printBillReceipt(payload: {
         style: {
           width: 0.25,
           textAlign: 'right',
-          padding: '2px 0'
+          padding: '2px 0',
+          paddingRight: '10px'
         }
       }
     ]),
@@ -317,7 +322,8 @@ export async function printBillReceipt(payload: {
           style: {
             width: 0.25,
             textAlign: 'right',
-            fontWeight: '700'
+            fontWeight: '700',
+            paddingRight: '10px'
           }
         }
       ],
@@ -331,7 +337,7 @@ export async function printBillReceipt(payload: {
             fontWeight: '700',
             border: '0px solid #fff',
 
-            padding: '2px 0'
+            padding: '2px 0',
           }
         },
         {
@@ -343,8 +349,9 @@ export async function printBillReceipt(payload: {
             fontWeight: '700',
             border: '0px solid #fff',
 
-            padding: '2px 0'
-          }
+            padding: '2px 0',
+            paddingRight: '10px'
+          },
         }
       ],
       [
@@ -357,7 +364,7 @@ export async function printBillReceipt(payload: {
             fontWeight: '700',
             border: '0px solid #fff',
 
-            padding: '2px 0'
+            padding: '2px 0',
           }
         },
         {
@@ -368,7 +375,8 @@ export async function printBillReceipt(payload: {
             textAlign: 'right',
             fontWeight: '700',
             border: '0px solid #fff',
-            padding: '2px 0'
+            padding: '2px 0',
+            paddingRight: '10px'
           }
         }
       ]
@@ -712,7 +720,7 @@ export async function printOrderReceipt(payload: {
 
   lines.push({
     type: 'text',
-    value: `Data: ${new Date(order.date).toLocaleString()}`,
+    value: `Data: ${order.date}`,
     style: {
       textAlign: 'left',
       fontWeight: '500',
