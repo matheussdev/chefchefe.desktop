@@ -2,7 +2,7 @@ import { Container } from '@renderer/components/Container'
 import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
 import { Bill, Product } from '@renderer/types'
-import { Flex, FormInstance, message } from 'antd'
+import { Flex, message } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ProductsSelectTable } from './components/productsSelctTable'
@@ -51,12 +51,8 @@ export const TerminalSelectedPage: React.FC = () => {
         (product.code ? product.code.toLocaleLowerCase() === value.toLocaleLowerCase() : false) ||
         product?.slug.toLowerCase().includes(value.toLowerCase())
     )
-  const form = useRef<FormInstance>(null)
-  const choseProduct = (product: Product) => {
+  const choseProduct = async (product: Product) => {
     setSelectedProduct(product)
-    setTimeout(() => {
-      form.current?.getFieldInstance('quantity')?.focus()
-    }, 200)
   }
 
   const onSearch = (value: string) => {
@@ -121,7 +117,6 @@ export const TerminalSelectedPage: React.FC = () => {
         </Flex>
       )}
       <OrderModal
-        form={form}
         billId={billId || ''}
         selectedProduct={selectedProduct}
         onClose={() => setSelectedProduct(null)}

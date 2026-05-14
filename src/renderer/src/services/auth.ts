@@ -17,5 +17,5 @@ export const getRestaurantToken: () => string | null = () =>
 export const logout: () => void = () => {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(`${KEY}@restaurant_id`)
-  window.location.reload()
+  window.api.reloadApp()
 }

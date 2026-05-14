@@ -134,6 +134,8 @@ export async function printBillReceipt(payload: {
     subtotal: number
     tax: number
     total: number
+    total_received?: number
+    change?: number
   }
   items: {
     name: string
@@ -148,6 +150,10 @@ export async function printBillReceipt(payload: {
     zip: string
     phone: string
   }
+  payments?: {
+    method: string
+    amount: number
+  }[]
 }) {
   const { printerName, bill, items, restaurant } = payload
   const lines: ReceiptLine[] = []
@@ -371,6 +377,124 @@ export async function printBillReceipt(payload: {
       border: '0px solid #fff'
     }
   })
+
+  if (bill.total_received && bill.total_received > 0 && bill.change && bill.change > 0) {
+    lines.push({
+      type: 'table',
+      style: {
+        border: '0px solid #fff'
+      },
+      tableBody: [
+        [
+          {
+            type: 'text',
+            value: 'Valor Recebido',
+            style: {
+              width: 0.75,
+              textAlign: 'left',
+              fontWeight: '700',
+              border: 'none',
+              padding: '2px 0'
+            }
+          },
+          {
+            type: 'text',
+            value: money(bill.total_received),
+            style: {
+              width: 0.25,
+              textAlign: 'right',
+              fontWeight: '700'
+            }
+          }
+        ],
+        [
+          {
+            type: 'text',
+            value: 'Troco',
+            style: {
+              width: 0.75,
+              textAlign: 'left',
+              fontWeight: '700',
+              border: 'none',
+              padding: '2px 0'
+            }
+          },
+          {
+            type: 'text',
+            value: money(bill.change),
+            style: {
+              width: 0.25,
+              textAlign: 'right',
+              fontWeight: '700'
+            }
+          }
+        ]
+      ],
+      tableBodyStyle: {
+        border: '0px solid #fff'
+      }
+    })
+  }
+
+  if (payload.payments && payload.payments.length > 0) {
+    lines.push({
+      type: 'table',
+      style: {
+        border: 'none'
+      },
+      // largura das colunas
+      tableHeader: [
+        {
+          type: 'text',
+          value: 'ITEM',
+          style: {
+            width: 0.75,
+            fontWeight: '700'
+          }
+        },
+
+        {
+          type: 'text',
+          value: 'VALOR',
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            fontWeight: '700'
+          }
+        }
+      ],
+
+      tableBody: payload.payments.map((payment) => [
+        {
+          type: 'text',
+
+          value: payment.method,
+
+          style: {
+            width: 0.75,
+            textAlign: 'left',
+            padding: '2px 0'
+          }
+        },
+
+        {
+          type: 'text',
+
+          value: money(payment.amount),
+
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            padding: '2px 0'
+          }
+        }
+      ]),
+      tableBodyStyle: {
+        border: 'none'
+      }
+    })
+  }
+
   lines.push({
     type: 'table',
     style: {
@@ -527,7 +651,7 @@ export async function printOrderReceipt(payload: {
     notes?: string
     date: string
   }
-  type: "first" | "reprint"
+  type: 'first' | 'reprint'
 }) {
   const { printerName, order, type } = payload
 
@@ -540,7 +664,7 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'center',
       fontWeight: '700',
-      fontSize: '18px',
+      fontSize: '18px'
     }
   })
 
@@ -550,20 +674,20 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'left',
       fontWeight: '700',
-      fontSize: '16px',
+      fontSize: '16px'
     }
   })
 
   if (order.table) {
     lines.push({
-    type: 'text',
-    value: `Mesa: ${order.table || order.identification || 'N/A'}`,
-    style: {
-      textAlign: 'left',
-      fontWeight: '700',
-      fontSize: '16px',
-    }
-  })
+      type: 'text',
+      value: `Mesa: ${order.table || order.identification || 'N/A'}`,
+      style: {
+        textAlign: 'left',
+        fontWeight: '700',
+        fontSize: '16px'
+      }
+    })
   }
 
   lines.push({
@@ -572,7 +696,7 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'left',
       fontWeight: '500',
-      fontSize: '16px',
+      fontSize: '16px'
     }
   })
 
@@ -582,11 +706,9 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'left',
       fontWeight: '700',
-      fontSize: '12px',
+      fontSize: '12px'
     }
   })
-
-
 
   lines.push({
     type: 'text',
@@ -594,7 +716,7 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'left',
       fontWeight: '500',
-      fontSize: '12px',
+      fontSize: '12px'
     }
   })
 
@@ -607,7 +729,7 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'center',
       fontWeight: '700',
-      fontSize: '20px',
+      fontSize: '20px'
     }
   })
 
@@ -618,7 +740,7 @@ export async function printOrderReceipt(payload: {
       style: {
         textAlign: 'center',
         fontWeight: '500',
-        fontSize: '16px',
+        fontSize: '16px'
       }
     })
 
@@ -628,14 +750,119 @@ export async function printOrderReceipt(payload: {
       style: {
         textAlign: 'center',
         fontWeight: '500',
-        fontSize: '16px',
+        fontSize: '16px'
       }
     })
-
   }
   lines.push(lineSeparator() as ReceiptLine)
   lines.push(lineSeparator() as ReceiptLine)
   lines.push(lineSeparator() as ReceiptLine)
+  await window.api.printReceipt({
+    printerName,
+    lines
+  })
+}
+
+export async function printCloseCommand(payload: {
+  printerName: string
+  bill: {
+    bill_number: string
+    table: string
+    subtotal: number
+  }
+  orders: {
+    name: string
+    quantity: number
+    price: number
+  }[]
+  date: string
+  motivo: string
+  employee: string
+}) {
+  const { printerName, bill, orders } = payload
+
+  const lines: ReceiptLine[] = []
+
+  // HEADER
+  lines.push({
+    type: 'text',
+    value: 'CANCELAMENTO DE COMANDA',
+    style: {
+      textAlign: 'center',
+      fontWeight: '700',
+      fontSize: '18px'
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Comanda: ${bill.bill_number}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '700',
+      fontSize: '16px'
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Mesa: ${bill.table}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '700',
+      fontSize: '16px'
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Data: ${payload.date}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '500',
+      fontSize: '12px'
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Motivo: ${payload.motivo}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '500',
+      fontSize: '12px'
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Funcionário: ${payload.employee}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '500',
+      fontSize: '12px'
+    }
+  })
+
+  lines.push(lineSeparator() as ReceiptLine)
+
+  // PRODUTOS
+  orders.forEach((item) => {
+    lines.push({
+      type: 'text',
+      value: `${item.quantity}x ${item.name} - ${money(item.price)}`,
+      style: {
+        textAlign: 'center',
+        fontWeight: '700',
+        fontSize: '20px'
+      }
+    })
+  })
+
+  lines.push(lineSeparator() as ReceiptLine)
+  lines.push(lineSeparator() as ReceiptLine)
+  lines.push(lineSeparator() as ReceiptLine)
+
   await window.api.printReceipt({
     printerName,
     lines

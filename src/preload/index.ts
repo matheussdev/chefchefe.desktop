@@ -32,8 +32,17 @@ const api = Object.freeze({
 
   requestWeight: () => ipcRenderer.invoke('scale:request-weight'),
 
+  checkConnectScale: () => ipcRenderer.invoke('scale:check-connect'),
+
   onScaleWeight: (callback: (_: unknown, weight: number) => void) =>
-    ipcRenderer.on('scale:weight', callback)
+    ipcRenderer.on('scale:weight', callback),
+
+  removeScaleWeightListener: () => ipcRenderer.removeAllListeners('scale:weight'),
+
+  onScaleError: (callback: (_: unknown, error: string) => void) =>
+    ipcRenderer.on('scale:error', callback),
+
+  removeScaleErrorListener: () => ipcRenderer.removeAllListeners('scale:error')
 })
 
 if (process.contextIsolated) {

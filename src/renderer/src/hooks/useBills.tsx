@@ -1,6 +1,7 @@
 import api from '@renderer/services/api'
 import { Bill, Table, Product } from '@renderer/types'
 import { errorActions } from '@renderer/utils'
+import { AnyObject } from 'antd/es/_util/type'
 import { createContext, type ReactNode, useCallback, useContext, useState } from 'react'
 
 interface BillProviderProps {
@@ -9,14 +10,13 @@ interface BillProviderProps {
 
 interface BillContextData {
   bills: Bill[]
-  fetchBills: (params?: any, updateBills?: boolean) => Promise<Bill[] | Bill>
+  fetchBills: (params?: AnyObject, updateBills?: boolean) => Promise<Bill[]>
   fetchBillById: (id: string) => Promise<Bill>
   fetchTables: () => Promise<Table[] | Table>
   tables: Table[]
   products: Product[]
   fetchProducts: () => Promise<Product[] | Product>
 }
-
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const BillContext = createContext<BillContextData>({} as BillContextData)
@@ -25,27 +25,30 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
   const [bills, setBills] = useState<Bill[]>([])
   const [tables, setTables] = useState<Table[]>([])
   const [products, setProducts] = useState<Product[]>([])
-  const fetchBills = useCallback(async (params?: any, updateBills: boolean = true): Promise<Bill[] | Bill> => {
-    return new Promise<Bill[] | Bill>((resolve, reject) => {
-      api
-        .get('v1/desktop/bills/', {
-          params: {
-            paginated: false,
-            ...params
-          }
-        })
-        .then((response) => {
-          if (updateBills) {
-            setBills(response.data)
-          }
-          resolve(response.data)
-        })
-        .catch((error) => {
-          errorActions(error)
-          reject(error?.response?.data?.detail || 'Erro ao buscar comandas')
-        })
-    })
-  }, [])
+  const fetchBills = useCallback(
+    async (params?: AnyObject, updateBills: boolean = true): Promise<Bill[]> => {
+      return new Promise<Bill[]>((resolve, reject) => {
+        api
+          .get('v1/desktop/bills/', {
+            params: {
+              paginated: false,
+              ...params
+            }
+          })
+          .then((response) => {
+            if (updateBills) {
+              setBills(response.data)
+            }
+            resolve(response.data)
+          })
+          .catch((error) => {
+            errorActions(error)
+            reject(error?.response?.data?.detail || 'Erro ao buscar comandas')
+          })
+      })
+    },
+    []
+  )
   const fetchTables = useCallback(async (): Promise<Table[] | Table> => {
     return new Promise<Table[] | Table>((resolve, reject) => {
       api

@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import * as S from './styles'
-import { Alert, Button, Drawer, Flex, Form, Input, message, Select, Switch, Tooltip, Typography } from 'antd'
+import {
+  Alert,
+  Button,
+  Drawer,
+  Flex,
+  Form,
+  Input,
+  message,
+  Select,
+  Switch,
+  Tooltip,
+  Typography
+} from 'antd'
 import {
   Armchair,
   BanknoteArrowDown,
   ChefHat,
   FileDigit,
   LogOut,
-  MonitorUp,
   RefreshCcw,
   Settings
 } from 'lucide-react'
@@ -34,15 +45,13 @@ const Menu = (): React.JSX.Element => {
       manufacturer?: string
     }[]
   >([])
-
-  const [selectedPort, setSelectedPort] = useState<string>()
-
+  const [scaleConnected, setScaleConnected] = useState(false)
   useEffect(() => {
-    window.api.listScalePorts().then(setPorts)
-
-    // window.api.onScaleWeight((_, weight) => {
-    //   form.current?.setFieldValue('quantity', weight)
-    // })
+    const init = async () => {
+      window.api.listScalePorts().then(setPorts)
+      setScaleConnected(await window.api.checkConnectScale())
+    }
+    init()
   }, [])
   const [messageApi, contextHolder] = message.useMessage()
   return (
@@ -64,14 +73,14 @@ const Menu = (): React.JSX.Element => {
           size="large"
         />
       </Tooltip>
-      <Tooltip title="Terminal de pedidos">
+      {/* <Tooltip title="Terminal de pedidos">
         <Button
           icon={<MonitorUp />}
           shape="circle"
           size="large"
           onClick={() => navigate('/terminal/')}
         />
-      </Tooltip>
+      </Tooltip> */}
       <Tooltip title="Mesas">
         <Button
           icon={<Armchair />}
@@ -117,7 +126,7 @@ const Menu = (): React.JSX.Element => {
         )}
         <Form
           layout="vertical"
-          onFinish={(values) => {
+          onFinish={async (values) => {
             if (values.defaultOperatorCode) {
               localStorage.setItem('chefchefe@terminal-saved-code', values.defaultOperatorCode)
               setDefaultOperatorCode(values.defaultOperatorCode)
@@ -141,6 +150,11 @@ const Menu = (): React.JSX.Element => {
               localStorage.setItem('chefchefe@api-base-url', values.apiBaseUrl)
             } else {
               localStorage.removeItem('chefchefe@api-base-url')
+            }
+            if (values.scalePort) {
+              localStorage.setItem('chefchefe@terminal-scale-port', values.scalePort)
+            } else {
+              localStorage.removeItem('chefchefe@terminal-scale-port')
             }
             messageApi.success('Configurações salvas com sucesso!')
             window.api.reloadApp()
@@ -174,17 +188,21 @@ const Menu = (): React.JSX.Element => {
           <Form.Item
             label="Base URL da API"
             name="apiBaseUrl"
-            initialValue={localStorage.getItem('chefchefe@api-base-url') || 'http://localhost:8001/api'}
+            initialValue={
+              localStorage.getItem('chefchefe@api-base-url') || 'http://localhost:8001/api'
+            }
           >
             <Input size="large" placeholder="Base URL da API" />
           </Form.Item>
-          <Form.Item label="Porta da balança">
+          <Form.Item
+            label="Porta da balança"
+            name="scalePort"
+            initialValue={localStorage.getItem('chefchefe@terminal-scale-port')}
+          >
             <Select
               size="large"
-              value={selectedPort}
-              onChange={async (value) => {
-                setSelectedPort(value)
-                await window.api.connectScale(value)
+              onChange={() => {
+                setScaleConnected(false)
               }}
               options={ports.map((port) => ({
                 label: `${port.path} - ${port.manufacturer || 'Desconhecido'}`,
@@ -192,6 +210,13 @@ const Menu = (): React.JSX.Element => {
               }))}
             />
           </Form.Item>
+          {scaleConnected && (
+            <Alert
+              type="success"
+              description={`Balança conectada`}
+              style={{ marginBottom: '1rem' }}
+            />
+          )}
           <Form.Item>
             <Button block type="primary" size="large" htmlType="submit">
               Salvar
@@ -225,7 +250,7 @@ export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
   useHotkeys(['t', 'c'], (_, handler) => {
     switch (handler.hotkey) {
       case 't':
-        navigate('/terminal')
+        // navigate('/terminal')
         break
       case 'c':
         navigate('/comandas')

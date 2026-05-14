@@ -9,7 +9,8 @@ import {
   listScalePorts,
   connectScale,
   disconnectScale,
-  requestWeight
+  requestWeight,
+  checkConnectScale
 } from './services/scale'
 log.initialize()
 
@@ -144,25 +145,22 @@ ipcMain.handle('shell:open-external', async (_e, url: string) => {
   }
 })
 
-ipcMain.handle(
-  'print:receipt',
-  async (_, payload) => {
-    try {
-      await printThermalReceipt(payload)
+ipcMain.handle('print:receipt', async (_, payload) => {
+  try {
+    await printThermalReceipt(payload)
 
-      return {
-        success: true
-      }
-    } catch (error) {
-      console.error(error)
+    return {
+      success: true
+    }
+  } catch (error) {
+    console.error(error)
 
-      return {
-        success: false,
-        error: String(error)
-      }
+    return {
+      success: false,
+      error: String(error)
     }
   }
-)
+})
 
 ipcMain.handle('app:reload', () => {
   const win = BrowserWindow.getAllWindows()[0]
@@ -172,35 +170,25 @@ ipcMain.handle('app:reload', () => {
   }
 })
 
+ipcMain.handle('scale:list-ports', async () => {
+  return await listScalePorts()
+})
 
-ipcMain.handle(
-  'scale:list-ports',
-  async () => {
-    return await listScalePorts()
-  }
-)
+ipcMain.handle('scale:connect', async (_, path: string) => {
+  return await connectScale(path)
+})
 
-ipcMain.handle(
-  'scale:connect',
-  async (_, path: string) => {
-    return await connectScale(path)
-  }
-)
+ipcMain.handle('scale:disconnect', async () => {
+  return await disconnectScale()
+})
 
-ipcMain.handle(
-  'scale:disconnect',
-  async () => {
-    return await disconnectScale()
-  }
-)
+ipcMain.handle('scale:request-weight', async () => {
+  return await requestWeight()
+})
 
-ipcMain.handle(
-  'scale:request-weight',
-  async () => {
-    return await requestWeight()
-  }
-)
-
+ipcMain.handle('scale:check-connect', async () => {
+  return await checkConnectScale()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

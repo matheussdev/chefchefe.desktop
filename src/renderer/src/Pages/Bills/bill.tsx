@@ -1,5 +1,19 @@
 import { useBill } from '@renderer/hooks/useBills'
-import { Button, Card, Drawer, Flex, Form, message, Select, Tabs, Tag, Typography } from 'antd'
+import {
+  Button,
+  Card,
+  Drawer,
+  Flex,
+  Form,
+  FormInstance,
+  Input,
+  message,
+  Modal,
+  Select,
+  Tabs,
+  Tag,
+  Typography
+} from 'antd'
 import { ChevronLeft, FileDigit, MonitorUp, Receipt } from 'lucide-react'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -10,6 +24,7 @@ import { BillItemsTable } from './components/BillItems'
 import { useHotkeys } from 'react-hotkeys-hook'
 import api from '@renderer/services/api'
 import { errorActions } from '@renderer/utils'
+import { printCloseCommand } from '@renderer/utils/Printers'
 const { Text } = Typography
 export const BillDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -21,6 +36,10 @@ export const BillDetailPage: React.FC = () => {
   const [unifyDrawerOpen, setUnifyDrawerOpen] = React.useState(false)
   const [loadingUnify, setLoadingUnify] = React.useState(false)
   const [messageApi, contextHolder] = message.useMessage()
+  const [cancelModalOpen, setCancelModalOpen] = React.useState(false)
+  const [cancelError, setCancelError] = React.useState<string | null>(null)
+  const [loadingCancel, setLoadingCancel] = React.useState(false)
+  const cancelForm = useRef<FormInstance | null>(null)
   const getBill = useCallback(
     async (id: string) => {
       setLoadingBill(true)
@@ -42,7 +61,7 @@ export const BillDetailPage: React.FC = () => {
           setLoadingBill(false)
         })
     },
-    [fetchBillById]
+    [fetchBillById, fetchBills]
   )
   useEffect(() => {
     if (!hasUpdatedBills.current && id) {
@@ -54,7 +73,7 @@ export const BillDetailPage: React.FC = () => {
   useHotkeys(['q', 'u', 'n', 'f'], (_, handler) => {
     switch (handler.hotkey) {
       case 'q':
-        navigate(-1)
+        navigate('/comandas')
         break
       case 'u':
         setUnifyDrawerOpen(true)
@@ -63,7 +82,7 @@ export const BillDetailPage: React.FC = () => {
         alert('NF!')
         break
       case 'f':
-        navigate(`/terminal/${id}/`)
+        if (bill?.is_open) navigate(`/terminal/${id}/`)
         break
     }
   })
@@ -88,7 +107,7 @@ export const BillDetailPage: React.FC = () => {
           <Button
             icon={<ChevronLeft size={16} />}
             onClick={() => {
-              navigate(-1)
+              navigate('/comandas')
             }}
             type="text"
             style={{ padding: '0rem' }}
@@ -114,17 +133,20 @@ export const BillDetailPage: React.FC = () => {
                 ))
               : bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Flex>
+          {bill?.is_open && (
+            <Button
+              style={{ marginLeft: 'auto' }}
+              icon={<MonitorUp size={16} />}
+              onClick={() => {
+                navigate(`/terminal/${id}/`)
+              }}
+              type="dashed"
+            >
+              Adicionar Pedido (F)
+            </Button>
+          )}
           <Button
-            style={{ marginLeft: 'auto' }}
-            icon={<MonitorUp size={16} />}
-            onClick={() => {
-              navigate(`/terminal/${id}/`)
-            }}
-            type="dashed"
-          >
-            Adicionar Pedido (F)
-          </Button>
-          <Button
+            style={{ marginLeft: bill?.is_open ? '0.5rem' : 'auto' }}
             icon={<FileDigit size={16} />}
             onClick={() => {
               setUnifyDrawerOpen(true)
@@ -169,7 +191,10 @@ export const BillDetailPage: React.FC = () => {
                     }
                     loading={loadingBill}
                     onCancelSuccess={() => {
-                      window.location.reload()
+                      window.api.reloadApp()
+                    }}
+                    onTransferSuccess={() => {
+                      window.api.reloadApp()
                     }}
                   />
                 )
@@ -177,6 +202,7 @@ export const BillDetailPage: React.FC = () => {
               {
                 label: `Pagamentos`,
                 key: '2',
+                disabled: bill?.is_open,
                 children: <>olá2</>,
                 style: { padding: '1rem' }
               }
@@ -226,6 +252,11 @@ export const BillDetailPage: React.FC = () => {
               }
               loading={loadingBill}
             />
+          )}
+          {bill?.is_open && (
+            <Button type="dashed" block danger onClick={() => setCancelModalOpen(true)}>
+              Fechar comanda
+            </Button>
           )}
         </Flex>
       )}
@@ -288,6 +319,98 @@ export const BillDetailPage: React.FC = () => {
           </Form.Item>
         </Form>
       </Drawer>
+      <Modal
+        open={cancelModalOpen}
+        onCancel={() => !loadingCancel && setCancelModalOpen(false)}
+        title="Fechar comanda"
+        destroyOnHidden
+        footer={
+          <Flex gap="0.5rem" justify="space-between">
+            <Button
+              onClick={() => {
+                setCancelError(null)
+                setCancelModalOpen(false)
+              }}
+              disabled={loadingCancel}
+            >
+              Voltar
+            </Button>
+            <Button
+              type="primary"
+              danger
+              onClick={() => cancelForm.current?.submit()}
+              loading={loadingCancel}
+            >
+              Sim, fechar comanda
+            </Button>
+          </Flex>
+        }
+      >
+        <Text>Tem certeza que deseja fechar esta comanda?</Text>
+        <Form
+          layout="vertical"
+          style={{ marginTop: '1rem' }}
+          ref={cancelForm}
+          onFinish={(values) => {
+            setCancelError(null)
+            setLoadingCancel(true)
+            api
+              .patch(`/v1/desktop/bills/${id}/`, {
+                is_open: false,
+                ...values
+              })
+              .then(async (res) => {
+                messageApi.success('Comanda fechada com sucesso!')
+                const data = {
+                  printerName: 'caixa',
+                  bill: {
+                    bill_number: bill?.number.toString() || '',
+                    table: bill?.table_number ? `Mesa ${bill.table_number}` : 'Sem mesa',
+                    subtotal: bill?.orders
+                      ? bill?.orders.reduce((acc, item) => acc + Number(item.total_price), 0)
+                      : 0
+                  },
+                  orders: bill?.orders
+                    ? bill?.orders.map((order) => ({
+                        name: order.product_name,
+                        quantity: Number(order.quantity),
+                        price: Number(order.total_price)
+                      }))
+                    : [],
+                  date: new Date().toLocaleString(),
+                  motivo: values.close_message || '',
+                  employee: res?.data?.close_detail?.closed_by_name || ''
+                }
+                await printCloseCommand(data)
+                navigate('/comandas')
+              })
+              .catch((error) => {
+                errorActions(error)
+                setCancelError(error.response?.data?.detail || 'Erro ao cancelar item')
+              })
+              .finally(() => {
+                setLoadingCancel(false)
+              })
+          }}
+        >
+          <Form.Item name="close_message" label="Motivo do fechamento">
+            <Input.TextArea placeholder="Motivo do fechamento" size="large" />
+          </Form.Item>
+          <Form.Item
+            name="code"
+            label="Código do operador"
+            rules={[{ required: true, message: 'Código do operador é obrigatório' }]}
+            required
+          >
+            <Input.Password placeholder="Código do operador" size="large" />
+          </Form.Item>
+        </Form>
+        {cancelError && (
+          <Text type="danger" style={{ marginTop: '0.5rem', display: 'block' }}>
+            {cancelError}
+          </Text>
+        )}
+      </Modal>
     </Flex>
   )
 }

@@ -1,10 +1,13 @@
 import { BillCard } from '@renderer/components/BillCard'
 import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
-import { Flex, Spin, Tag, Typography } from 'antd'
+import { Button, Flex, Modal, Spin, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
+import { Plus } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { BillFormPage } from './form'
+import { useHotkeys } from 'react-hotkeys-hook'
 const { Text } = Typography
 
 export const BillsPage: React.FC = () => {
@@ -14,6 +17,7 @@ export const BillsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const [openBillModal, setOpenBillModal] = useState(false)
 
   useEffect(() => {
     if (!hasUpdatedBills.current) {
@@ -26,6 +30,18 @@ export const BillsPage: React.FC = () => {
       hasUpdatedBills.current = true
     }
   }, [fetchBills])
+  useHotkeys(
+    ['n'],
+    (_, handler) => {
+      switch (handler.hotkey) {
+        case 'n':
+          setOpenBillModal(true)
+          break
+      }
+    },
+    { enableOnContentEditable: true }
+  )
+
   return (
     <Flex
       style={{
@@ -41,7 +57,7 @@ export const BillsPage: React.FC = () => {
         }}
         gap="1rem"
       >
-        <Flex wrap="wrap" gap="0.2rem">
+        <Flex wrap="wrap" gap="0.2rem" align="center" justify="space-between">
           <Text
             strong
             style={{
@@ -117,6 +133,16 @@ export const BillsPage: React.FC = () => {
           >
             Todas {statusFilter === 'all' ? `(${bills.length})` : ''}
           </Tag>
+          <Button
+            onClick={() => {
+              setOpenBillModal(true)
+            }}
+            style={{ marginLeft: 'auto' }}
+            icon={<Plus size={16} />}
+            type="dashed"
+          >
+            Abrir comanda (N)
+          </Button>
         </Flex>
         <Spin spinning={loading} description="Carregando comandas..." size="large">
           <div
@@ -166,6 +192,19 @@ export const BillsPage: React.FC = () => {
           />
         </Flex>
       )}
+      <Modal
+        open={openBillModal}
+        onCancel={() => setOpenBillModal(false)}
+        footer={null}
+        title="Abrir nova comanda"
+      >
+        <BillFormPage
+          onSuccess={(bill) => {
+            setOpenBillModal(false)
+            navigate(`/comandas/${bill.id}`)
+          }}
+        />
+      </Modal>
     </Flex>
   )
 }

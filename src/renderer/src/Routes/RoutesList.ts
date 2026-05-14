@@ -7,7 +7,6 @@ import { HomePage } from '@renderer/Pages/Home'
 import { TablesPage } from '@renderer/Pages/Tables'
 import { TerminalBillsPage, TerminalSelectedPage } from '@renderer/Pages/Terminal'
 import { MonitorUp } from 'lucide-react'
-// import { IoBoatOutline } from "react-icons/io5";
 
 export const routes = [
   {
@@ -93,5 +92,5 @@ export const routes = [
     showSidebar: true,
     show: true,
     especialIcon: true
-  },
+  }
 ]

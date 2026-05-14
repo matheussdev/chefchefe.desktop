@@ -3,6 +3,7 @@ import api from '@renderer/services/api'
 import { Bill } from '@renderer/types'
 import { errorActions } from '@renderer/utils'
 import { Alert, Button, Form, FormInstance, Input, InputNumber, Select } from 'antd'
+import { AnyObject } from 'antd/es/_util/type'
 import { useEffect, useRef, useState } from 'react'
 
 interface BillFormPageProps {
@@ -14,11 +15,15 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
   const [error, setError] = useState<string | null>(null)
   const form = useRef<FormInstance>(null)
   const { tables, fetchTables } = useBill()
-  const createBill = (values: any) => {
+  const savedCode = localStorage.getItem('chefchefe@terminal-saved-code') || ''
+  const createBill = (values: AnyObject) => {
     setLoading(true)
     setError(null)
     api
-      .post('v1/desktop/bills/', values)
+      .post('v1/desktop/bills/', {
+        ...values,
+        code: savedCode ? savedCode : values.code
+      })
       .then((res) => {
         form?.current?.resetFields()
         if (onSuccess) {
@@ -50,7 +55,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
           {
             pattern: /^\d+$/,
             message: 'O número da comanda deve conter apenas dígitos'
-          },
+          }
         ]}
         required
       >
@@ -96,25 +101,31 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
             optionFilterProp: 'number'
           }}
           onSelect={() => {
-            form.current?.getFieldInstance('code')?.focus()
+            if (savedCode) {
+              window.document.getElementById('button-open-bill')?.focus()
+            } else {
+              form.current?.getFieldInstance('code')?.focus()
+            }
           }}
         />
       </Form.Item>
-      <Form.Item
-        name="code"
-        label="Código do operador"
-        rules={[{ required: true, message: 'Código do operador é obrigatório' }]}
-        required
-      >
-        <Input.Password
-          size="large"
-          placeholder="Código do operador"
-          onPressEnter={(e) => {
-            e.preventDefault()
-            window.document.getElementById('button-open-bill')?.focus()
-          }}
-        />
-      </Form.Item>
+      {!savedCode && (
+        <Form.Item
+          name="code"
+          label="Código do operador"
+          rules={[{ required: true, message: 'Código do operador é obrigatório' }]}
+          required
+        >
+          <Input.Password
+            size="large"
+            placeholder="Código do operador"
+            onPressEnter={(e) => {
+              e.preventDefault()
+              window.document.getElementById('button-open-bill')?.focus()
+            }}
+          />
+        </Form.Item>
+      )}
       {error && (
         <Form.Item>
           <Alert type="error" title={error} showIcon />

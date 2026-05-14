@@ -1,15 +1,28 @@
 import React from 'react'
-import { Button, Flex, Form, FormInstance, Input, Modal, Table, Tag, Typography } from 'antd'
-import { Clock, NotepadTextDashed, Trash2, User } from 'lucide-react'
-import { Order } from '@renderer/types'
+import {
+  Button,
+  Flex,
+  Form,
+  FormInstance,
+  Input,
+  Modal,
+  Select,
+  Table,
+  Tag,
+  Typography
+} from 'antd'
+import { Clock, Forward, NotepadTextDashed, Trash2, User } from 'lucide-react'
+import { Bill, Order } from '@renderer/types'
 import { currenyFormat, errorActions } from '@renderer/utils'
 import dayjs from 'dayjs'
 import api from '@renderer/services/api'
+import { useBill } from '@renderer/hooks/useBills'
 const { Text } = Typography
 interface BillItemsProps {
   items: Order[]
   loading?: boolean
   onCancelSuccess?: (order: Order) => void
+  onTransferSuccess?: (order: Order) => void
   open?: boolean
 }
 
@@ -17,12 +30,19 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
   items,
   loading,
   onCancelSuccess,
+  onTransferSuccess,
   open
 }) => {
   const [loadingCancel, setLoadingCancel] = React.useState<boolean>(false)
   const [toCancel, setToCancel] = React.useState<Order | null>(null)
+  const [toTransfer, setToTransfer] = React.useState<Order | null>(null)
+  const [loadingTransfer, setLoadingTransfer] = React.useState<boolean>(false)
+  const [transferError, setTransferError] = React.useState<string | null>(null)
   const [cancelError, setCancelError] = React.useState<string | null>(null)
   const cancelForm = React.useRef<FormInstance>(null)
+  const transferForm = React.useRef<FormInstance>(null)
+  const [opened, setOpened] = React.useState<Bill[]>([])
+  const { fetchBills } = useBill()
   return (
     <>
       <Table
@@ -75,10 +95,21 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
           {
             title: 'Ações',
             dataIndex: 'actions',
-            width: 60,
+            width: 80,
             hidden: !open,
             render: (_, record) => (
               <Flex gap="0.5rem">
+                <Button
+                  type="dashed"
+                  onClick={() => {
+                    setToTransfer(record)
+                    fetchBills({ is_open: true }, false).then((bills) => {
+                      setOpened(bills as Bill[])
+                    })
+                  }}
+                  size="small"
+                  icon={<Forward size={16} />}
+                ></Button>
                 <Button
                   type="dashed"
                   danger
@@ -119,7 +150,9 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
                       {modifier.complements.map((complement, i) => (
                         <Flex key={i} gap="0.5rem" style={{ marginLeft: '1rem' }}>
                           <span>{Number(complement.quantity)}x</span>
-                          <span>{complement.name} - {currenyFormat(Number(complement.price))}</span>
+                          <span>
+                            {complement.name} - {currenyFormat(Number(complement.price))}
+                          </span>
                         </Flex>
                       ))}
                     </Flex>
@@ -133,6 +166,85 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
         }}
         rowKey={(record) => record.id}
       />
+      <Modal
+        open={!!toTransfer}
+        onCancel={() => !loadingTransfer && setToTransfer(null)}
+        title="Transferir item"
+        destroyOnHidden
+        footer={
+          <Flex gap="0.5rem" justify="space-between">
+            <Button onClick={() => !loading && setToCancel(null)} disabled={loading}>
+              Voltar
+            </Button>
+            <Button
+              type="primary"
+              danger
+              onClick={() => transferForm.current?.submit()}
+              loading={loadingTransfer}
+            >
+              Sim, Transferir
+            </Button>
+          </Flex>
+        }
+      >
+        <Form
+          layout="vertical"
+          style={{ marginTop: '1rem' }}
+          ref={transferForm}
+          onFinish={(values) => {
+            setLoadingTransfer(true)
+            api
+              .patch(`/v1/desktop/orders/${toTransfer?.id}/`, {
+                ...values
+              })
+              .then((res) => {
+                setToTransfer(null)
+                onTransferSuccess?.(res.data)
+              })
+              .catch((error) => {
+                errorActions(error)
+                setTransferError(error.response?.data?.detail || 'Erro ao transferir item')
+              })
+              .finally(() => {
+                setLoadingTransfer(false)
+              })
+          }}
+        >
+          <Form.Item
+            name="new_bill"
+            label="Nova comanda"
+            rules={[{ required: true, message: 'Comanda de destino é obrigatória' }]}
+            required
+          >
+            <Select
+              placeholder="Selecione a comanda para qual deseja transferir o item"
+              options={opened
+                .filter((bill) => bill.number !== toTransfer?.bill_number)
+                .map((bill) => ({
+                  label: `Comanda ${bill.number} - ${bill.table_number || 'Sem mesa'}`,
+                  value: bill.id,
+                  number: bill.number
+                }))}
+              showSearch={{
+                optionFilterProp: 'number'
+              }}
+              size="large"
+            />
+          </Form.Item>
+          <Form.Item
+            name="code"
+            label="Código do operador"
+            rules={[{ required: true, message: 'Código do operador é obrigatório' }]}
+          >
+            <Input.Password placeholder="Código do operador" size="large" />
+          </Form.Item>
+        </Form>
+        {transferError && (
+          <Text type="danger" style={{ marginTop: '0.5rem', display: 'block' }}>
+            {transferError}
+          </Text>
+        )}
+      </Modal>
       <Modal
         open={!!toCancel}
         onCancel={() => !loading && setToCancel(null)}

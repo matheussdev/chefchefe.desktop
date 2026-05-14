@@ -9,11 +9,7 @@ const serialConfig = {
   stopBits: 1 as const,
   parity: 'none' as const
 }
-
-function sendToRenderer(
-  channel: string,
-  payload?: unknown
-) {
+function sendToRenderer(channel: string, payload?: unknown): void {
   const win = BrowserWindow.getAllWindows()[0]
 
   if (win && !win.isDestroyed()) {
@@ -21,15 +17,14 @@ function sendToRenderer(
   }
 }
 
-export async function listScalePorts() {
+export async function listScalePorts(): Promise<SerialPort[]> {
   return await SerialPort.list()
 }
 
-export async function connectScale(
-  path: string
-) {
-  if (currentPort?.isOpen) {
-    await disconnectScale()
+export async function connectScale(path: string): Promise<boolean> {
+  if (currentPort?.isOpen && currentPort.path === path) {
+    console.log('Balança já conectada na porta', path)
+    return true
   }
 
   currentPort = new SerialPort({
@@ -41,28 +36,32 @@ export async function connectScale(
     console.log('BALANÇA CONECTADA')
   })
 
+  let value = ''
+
   currentPort.on('data', (data) => {
-    const asText = data.toString()
+    if (!data) return
 
-    const weight =
-      asText
-        .replace(/\r/g, '')
-        .replace(/\n/g, '')
-        .replace(/[^0-9]/g, '')
+    // byte ETX = fim da transmissão
+    if (data[0] === 0x03) {
+      const cleaned = value.replace(/[^0-9]/g, '')
 
-    sendToRenderer(
-      'scale:weight',
-      Number(weight) / 1000
-    )
+      const kg = parseFloat(cleaned || '0') / 1000
+
+      sendToRenderer('scale:weight', kg)
+
+      console.log('Peso final:', kg)
+
+      value = '' // limpa buffer
+      return
+    }
+
+    value += data.toString()
   })
 
   currentPort.on('error', (err) => {
     console.error(err)
 
-    sendToRenderer(
-      'scale:error',
-      err.message
-    )
+    sendToRenderer('scale:error', err.message)
   })
 
   currentPort.on('close', () => {
@@ -72,7 +71,7 @@ export async function connectScale(
   return true
 }
 
-export async function disconnectScale() {
+export async function disconnectScale(): Promise<boolean> {
   return new Promise((resolve) => {
     if (!currentPort?.isOpen) {
       resolve(true)
@@ -87,7 +86,7 @@ export async function disconnectScale() {
   })
 }
 
-export async function requestWeight() {
+export async function requestWeight(): Promise<boolean> {
   if (!currentPort?.isOpen) {
     throw new Error('Balança desconectada')
   }
@@ -95,4 +94,10 @@ export async function requestWeight() {
   const enq = Buffer.from([0x05])
 
   currentPort.write(enq)
+
+  return true
+}
+
+export async function checkConnectScale(): Promise<boolean> {
+  return currentPort?.isOpen || false
 }

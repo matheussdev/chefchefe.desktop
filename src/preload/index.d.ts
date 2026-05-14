@@ -56,6 +56,14 @@ declare global {
       requestWeight: () => Promise<void>
 
       onScaleWeight: (callback: (_: unknown, weight: number) => void) => void
+
+      removeScaleWeightListener: () => void
+
+      onScaleError: (callback: (_: unknown, error: string) => void) => void
+
+      removeScaleErrorListener: () => void
+
+      checkConnectScale: () => Promise<boolean>
     }
   }
 }

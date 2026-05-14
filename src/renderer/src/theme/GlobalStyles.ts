@@ -67,7 +67,7 @@ html {
 }
 
 .ant-form-item{
-  margin-bottom: 1rem !important;
+  margin-bottom: 1rem;
 }
 `
 export default GlobalStyle

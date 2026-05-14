@@ -80,7 +80,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
         size="small"
         pagination={false}
         scroll={{
-          y: window.innerHeight - 200
+          y: window.innerHeight - 185
         }}
         virtual
         onRow={(record) => {

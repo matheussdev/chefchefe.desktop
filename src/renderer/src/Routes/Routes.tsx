@@ -21,11 +21,17 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
   const { fetchCashiers } = useCashier()
   const hasUpadated = useRef(false)
 
-  if (!hasUpadated.current) {
-    getRestaurant()
-    fetchCashiers()
-    hasUpadated.current = true
-  }
+  useEffect(() => {
+    if (!hasUpadated.current) {
+      getRestaurant()
+      fetchCashiers()
+      const scalePort = localStorage.getItem('chefchefe@terminal-scale-port')
+      if (scalePort) {
+        window.api.connectScale(scalePort)
+      }
+      hasUpadated.current = true
+    }
+  }, [fetchCashiers, getRestaurant])
 
   const fetchToPrint = useCallback(async () => {
     const idPc = localStorage.getItem('chefchefe@id-pc')

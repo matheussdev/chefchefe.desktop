@@ -48,10 +48,7 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }
       }}
       title={
         <Space style={{ margin: 0, padding: 0 }}>
-          <Landmark
-            color={token.colorPrimary}
-            size={20}
-          />
+          <Landmark color={token.colorPrimary} size={20} />
           Valor em caixa
         </Space>
       }
@@ -115,13 +112,12 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }
               })
               .then(() => {
                 messageApi.success('Caixa fechado com sucesso')
-                window.location.reload()
+                window.api.reloadApp()
               })
               .catch((error) => {
                 message.error(error?.response?.data?.message || 'Erro ao fechar caixa')
               })
-              .finally(() => {
-              })
+              .finally(() => {})
           }}
         >
           <Form.Item

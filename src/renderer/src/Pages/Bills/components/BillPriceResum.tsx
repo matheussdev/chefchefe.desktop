@@ -102,9 +102,20 @@ const Resum: React.FC<{
 interface PaymentFormProps {
   values: { subtotal: number; tax: number; discount: number }
   bills: string[]
+  bills_number?: string
+  orders: {
+    quantity: number
+    name: string
+    price: number
+  }[]
 }
 
-export const PaymentForm: React.FC<PaymentFormProps> = ({ values, bills }) => {
+export const PaymentForm: React.FC<PaymentFormProps> = ({
+  values,
+  bills,
+  bills_number,
+  orders
+}) => {
   const { restaurant } = useAuth()
   const { selectedCashier } = useCashier()
   const form = useRef<FormInstance>(null)
@@ -125,8 +136,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, bills }) => {
     ) / 100
 
   useEffect(() => {
-    form.current?.getFieldInstance(`payment_method_${payments.length - 1}`)?.focus()
+    form.current?.getFieldInstance(`payment_method_0}`)?.focus()
   }, [values])
+
   const [selectedChangeMethod, setSelectedChangeMethod] = React.useState<string | undefined>(
     restaurant?.payment_methods[0]?.id
   )
@@ -161,8 +173,41 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, bills }) => {
           .post('/v1/desktop/finish-bills/', {
             ...datasend
           })
-          .then(() => {
+          .then(async () => {
             messageApi.success('Pagamento registrado com sucesso!')
+            const data = {
+              type: 'close',
+              printerName: 'caixa',
+              bill: {
+                bill_number: bills_number || '',
+                table: '',
+                subtotal: datasend.subtotal,
+                tax: datasend.tax,
+                total: datasend.total,
+                total_received: datasend.total_received,
+                change: datasend.change
+              },
+              items: orders.map((order) => ({
+                name: order.name,
+                quantity: order.quantity,
+                price: order.price
+              })),
+              restaurant: {
+                name: restaurant?.name || '',
+                street: restaurant?.address || '',
+                city: restaurant?.city || '',
+                state: restaurant?.state || '',
+                zip: restaurant?.postal_code || '',
+                phone: restaurant?.phone || ''
+              },
+              payments: datasend.payments.map((payment) => ({
+                method:
+                  restaurant?.payment_methods.find((m) => m.id === payment.method)?.display_name ||
+                  '',
+                amount: payment.amount
+              }))
+            }
+            await printBillReceipt(data)
             navigate('/comandas')
           })
           .catch((err) => {
@@ -459,7 +504,7 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({
       tax = Math.round(tax * 100) / 100
       setTaxValue(tax)
     }
-  }, [subtotal])
+  }, [subtotal, restaurant])
   return (
     restaurant && (
       <>
@@ -622,6 +667,8 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({
             <PaymentForm
               values={{ subtotal: subtotal, tax: taxApplied ? taxValue : 0, discount: 0 }}
               bills={bills.map((bill) => bill.id)}
+              bills_number={bills.map((bill) => bill.number).join(', ')}
+              orders={orders}
             />
           </Modal>
         </Card>

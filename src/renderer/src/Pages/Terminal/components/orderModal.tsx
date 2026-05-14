@@ -1,14 +1,14 @@
-import React, { RefObject, useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { Order, Product } from '@renderer/types'
 import {
   Button,
   Flex,
   Form,
-  FormInstance,
   Input,
   InputNumber,
   message,
   Modal,
+  Space,
   Table,
   Typography
 } from 'antd'
@@ -24,7 +24,6 @@ interface OrderModalProps {
   onClose: () => void
   onSuccess?: (order: Order) => void
   billId: string
-  form?: RefObject<FormInstance<any> | null>
 }
 interface ProductToAdd {
   bill: string
@@ -84,9 +83,9 @@ export const OrderModal: React.FC<OrderModalProps> = ({
   selectedProduct,
   onClose,
   onSuccess,
-  billId,
-  form
+  billId
 }) => {
+  const [form] = Form.useForm()
   const [messageApi, contextHolder] = message.useMessage()
   const [loadingAdd, setLoadingAdd] = React.useState(false)
   const savedCode = localStorage.getItem('chefchefe@terminal-saved-code') || ''
@@ -139,7 +138,6 @@ export const OrderModal: React.FC<OrderModalProps> = ({
           if (response.data?.printer_name) {
             printOrderReceipt(data)
           }
-          form?.current?.resetFields()
           setComplementsToAdd([])
           messageApi.success('Produto adicionado com sucesso')
           onSuccess?.(response.data)
@@ -151,8 +149,26 @@ export const OrderModal: React.FC<OrderModalProps> = ({
           setLoadingAdd(false)
         })
     },
-    [complementsToAdd]
+    [complementsToAdd, savedCode, messageApi, onSuccess, loadingAdd]
   )
+  useEffect(() => {
+    window.api.onScaleWeight((_, weight) => {
+      console.log('Peso recebido do backend:', weight.toFixed(3))
+      form?.setFieldsValue({ quantity: formatToKilos(weight.toFixed(3)) })
+    })
+    return () => {
+      window.api.removeScaleWeightListener()
+    }
+  }, [form])
+
+  useEffect(() => {
+    window.api.onScaleError((_, error) => {
+      console.error('Erro no peso da balança:', error)
+    })
+    return () => {
+      window.api.removeScaleErrorListener()
+    }
+  }, [])
   return (
     <Modal
       open={!!selectedProduct}
@@ -168,9 +184,25 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         </Flex>
       }
       width={600}
+      afterOpenChange={(open) => {
+        if (!open) {
+          setComplementsToAdd([])
+          form.resetFields()
+        } else {
+          form?.setFieldsValue({
+            quantity: selectedProduct?.sell_type === 'UN' ? 1 : undefined
+          })
+          if (selectedProduct?.sell_type === 'KG') {
+            const buttonElement = document.getElementById('button-weight')
+            buttonElement?.focus()
+          } else {
+            form?.getFieldInstance('quantity')?.focus()
+          }
+        }
+      }}
     >
       {contextHolder}
-      <Form ref={form} layout="vertical" onFinish={onFinish}>
+      <Form form={form} layout="vertical" onFinish={onFinish}>
         <Form.Item name="product" initialValue={selectedProduct?.id} hidden></Form.Item>
         <Form.Item name="bill" initialValue={billId} hidden></Form.Item>
         {selectedProduct?.complement_groups.map((group) => (
@@ -254,70 +286,103 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'ArrowRight') {
                 e.preventDefault()
-                const quantityElement = form?.current?.getFieldInstance('quantity')
-                quantityElement?.focus()
+                form?.getFieldInstance('quantity')?.focus()
               }
             }}
           />
         </Form.Item>
-        <Flex style={{ width: '100%' }} gap="1rem" wrap="wrap">
-          <Form.Item
-            label={selectedProduct?.sell_type === 'UN' ? 'Quantidade' : 'Peso'}
-            name="quantity"
-            initialValue={selectedProduct?.sell_type === 'UN' ? 1 : undefined}
-            required
-            rules={[
-              {
-                required: true,
-                message: 'Obrigatório'
-              }
-            ]}
-          >
-            {selectedProduct?.sell_type === 'UN' ? (
+        <Flex style={{ width: '100%' }} gap="1rem" align="end">
+          {selectedProduct?.sell_type === 'UN' ? (
+            <Form.Item
+              label={selectedProduct?.sell_type === 'UN' ? 'Quantidade' : 'Peso'}
+              name="quantity"
+              initialValue={selectedProduct?.sell_type === 'UN' ? 1 : undefined}
+              required
+              rules={[
+                {
+                  required: true,
+                  message: 'Obrigatório'
+                }
+              ]}
+              style={{ marginBottom: 0 }}
+            >
               <InputNumber
                 min={1}
                 size="large"
                 onPressEnter={(e) => {
                   e.preventDefault()
                   if (!savedCode) {
-                    form?.current?.getFieldInstance('code')?.focus()
+                    form?.getFieldInstance('code')?.focus()
                   } else {
                     const buttonElement = document.getElementById('button-add-product')
                     buttonElement?.focus()
                   }
                 }}
               />
-            ) : (
-              <Input
+            </Form.Item>
+          ) : (
+            <Space.Compact style={{ alignItems: 'flex-end' }} size="large">
+              <Button
+                onClick={async () => {
+                  if (await window.api.checkConnectScale()) {
+                    await window.api.requestWeight()
+                    const buttonElement = document.getElementById('button-add-product')
+                    buttonElement?.focus()
+                  } else {
+                    messageApi.error('Balança desconectada')
+                    form.getFieldInstance('quantity')?.focus()
+                  }
+                }}
+                id="button-weight"
                 size="large"
-                suffix="Kg"
-                placeholder="0,000 Kg"
-                type="text"
-                onChange={(e) => {
-                  const value = formatToKilos(e.target.value)
-                  form?.current?.setFieldsValue({
-                    quantity: value
-                  })
-                }}
-                onPressEnter={(e) => {
-                  e.preventDefault()
-                  if (!savedCode) {
-                    form?.current?.getFieldInstance('code')?.focus()
-                  } else {
-                    const buttonElement = document.getElementById('button-add-product')
-                    buttonElement?.focus()
+              >
+                Atualizar
+              </Button>
+              <Form.Item
+                label={selectedProduct?.sell_type === 'UN' ? 'Quantidade' : 'Peso'}
+                name="quantity"
+                initialValue={selectedProduct?.sell_type === 'UN' ? 1 : undefined}
+                required
+                style={{ marginBottom: 0 }}
+                rules={[
+                  {
+                    required: true,
+                    message: 'Obrigatório'
                   }
-                }}
-              />
-            )}
-          </Form.Item>
+                ]}
+              >
+                <Input
+                  size="large"
+                  suffix="Kg"
+                  placeholder="0,000 Kg"
+                  type="text"
+                  onChange={(e) => {
+                    const value = formatToKilos(e.target.value)
+                    form?.setFieldsValue({
+                      quantity: value
+                    })
+                  }}
+                  onPressEnter={(e) => {
+                    e.preventDefault()
+                    if (!savedCode) {
+                      form?.getFieldInstance('code')?.focus()
+                    } else {
+                      const buttonElement = document.getElementById('button-add-product')
+                      buttonElement?.focus()
+                    }
+                  }}
+                />
+              </Form.Item>
+            </Space.Compact>
+          )}
           {!savedCode && (
             <Form.Item
               label="Código funcionário"
               name="code"
               required
               style={{
-                maxWidth: 200
+                maxWidth: 200,
+                marginBottom: 0
               }}
               rules={[
                 {
@@ -339,7 +404,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               />
             </Form.Item>
           )}
-          <Form.Item label="" style={{ flex: 1 }}>
+          <Form.Item label="" style={{ flex: 1, marginBottom: 0 }}>
             <Button
               type="primary"
               size="large"
@@ -350,12 +415,11 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'ArrowLeft') {
                   e.preventDefault()
-                  const quantityElement = form?.current?.getFieldInstance('quantity')
-                  quantityElement?.focus()
+                  form?.getFieldInstance('quantity')?.focus()
                 }
                 if (e.key === 'ArrowUp') {
                   e.preventDefault()
-                  const quantityElement = form?.current?.getFieldInstance('description')
+                  const quantityElement = form?.getFieldInstance('notes')
                   quantityElement?.focus()
                 }
               }}

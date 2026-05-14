@@ -21,18 +21,22 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
   srtartFocus
 }) => {
   const form = React.useRef<FormInstance>(null)
-  useHotkeys(['f', 'r'], (_, handler) => {
-    switch (handler.hotkey) {
-      case 'f':
-        setTimeout(() => {
-          form.current?.getFieldInstance('search')?.focus()
-        }, 100)
-        break
-      case 'r':
-        window.location.reload()
-        break
-    }
-  }, { enableOnContentEditable: false , keydown: false, keyup: true})
+  useHotkeys(
+    ['f', 'r'],
+    (_, handler) => {
+      switch (handler.hotkey) {
+        case 'f':
+          setTimeout(() => {
+            form.current?.getFieldInstance('search')?.focus()
+          }, 100)
+          break
+        case 'r':
+          window.api.reloadApp()
+          break
+      }
+    },
+    { enableOnContentEditable: false, keydown: false, keyup: true }
+  )
   useEffect(() => {
     setTimeout(() => {
       if (srtartFocus) {
@@ -40,7 +44,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
       }
       startF?.()
     }, 200)
-  }, [])
+  }, [startF, srtartFocus])
   return (
     <Card
       style={{
@@ -64,6 +68,11 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
             type="tel"
             size="large"
             prefix={<Search />}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                form.current?.getFieldInstance('search')?.blur()
+              }
+            }}
             placeholder={placeholder || 'Nº da comanda'}
             onChange={(e) => {
               let value = e.target.value

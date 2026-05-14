@@ -18,7 +18,7 @@ export const CashierConfigs: React.FC = () => {
         }))}
         onChange={(value) => {
           localStorage.setItem('@chefchefe:cashier_id', value || '')
-          window.location.reload()
+          window.api.reloadApp()
         }}
         value={selectedCashier?.id}
       ></Select>
