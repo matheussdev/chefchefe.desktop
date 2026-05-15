@@ -154,8 +154,20 @@ export interface Product {
   complement_groups: ComplementGroup[]
 }
 
+export interface CartProduct {
+  product: string
+  notes: string
+  quantity: number
+  unit_price: string
+  total_price: string
+  product_name: string
+  complements: {
+    complement: string
+    quantity: number
+  }[]
+}
 
-export interface Cashier{
+export interface Cashier {
   id: string
   identification: string
   is_open: boolean
@@ -169,16 +181,14 @@ export interface Cashier{
   current_value: string | null
 }
 
-
 export interface PmStats {
   total_amount: number
   average_amount: number
   transaction_count: number
   payment_method_name: string
-  method_type: string,
+  method_type: string
   avarage_count: number
 }
-
 
 export interface Sale {
   id: string

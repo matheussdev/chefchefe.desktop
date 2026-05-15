@@ -1,0 +1,1 @@
+export { BalcaoPage } from './balcao'

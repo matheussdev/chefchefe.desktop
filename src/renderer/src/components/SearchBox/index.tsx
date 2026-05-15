@@ -11,28 +11,41 @@ interface SearchBoxProps {
   type?: 'text' | 'number'
   startF?: () => void
   srtartFocus?: boolean
+  onTimeSearch?: (value: string) => void
+  onArrow?: (direction: 'up' | 'down') => void
 }
 
 export const SearchBox: React.FC<SearchBoxProps> = ({
   onSearch,
+  onTimeSearch,
   placeholder,
   type = 'number',
   startF,
-  srtartFocus
+  srtartFocus,
+  onArrow
 }) => {
   const form = React.useRef<FormInstance>(null)
   useHotkeys(
-    ['f', 'r'],
-    (_, handler) => {
-      switch (handler.hotkey) {
-        case 'f':
-          setTimeout(() => {
-            form.current?.getFieldInstance('search')?.focus()
-          }, 100)
-          break
-        case 'r':
-          window.api.reloadApp()
-          break
+    ['ctrl+r', 'meta+r', 'F5'],
+    () => {
+      window.api.reloadApp()
+    },
+    { enableOnContentEditable: true, keydown: false, keyup: true }
+  )
+  useHotkeys(
+    '*',
+    (handle) => {
+      // iff number or letter key is pressed without ctrl or meta
+      if (handle.ctrlKey || handle.metaKey) return
+      if (
+        (handle.key.length === 1 && /[a-zA-Z0-9]/.test(handle.key)) ||
+        (type != 'number' && handle.key.length === 1 && /\d/.test(handle.key))
+      ) {
+        form.current?.getFieldInstance('search')?.focus()
+        form.current?.setFieldsValue({ search: handle.key })
+      }
+      if (handle.key === 'Escape') {
+        form.current?.getFieldInstance('search')?.blur()
       }
     },
     { enableOnContentEditable: false, keydown: false, keyup: true }
@@ -73,12 +86,20 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
                 form.current?.getFieldInstance('search')?.blur()
               }
             }}
+            id="search-input-t"
             placeholder={placeholder || 'Nº da comanda'}
+            onKeyUp={(e) => {
+              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault()
+                onArrow?.(e.key === 'ArrowUp' ? 'up' : 'down')
+              }
+            }}
             onChange={(e) => {
               let value = e.target.value
               if (type === 'number') {
                 value = value.replace(/\D/g, '')
               }
+              onTimeSearch?.(value)
               form.current?.setFieldsValue({ search: value })
             }}
           />

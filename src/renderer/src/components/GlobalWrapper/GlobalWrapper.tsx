@@ -19,6 +19,7 @@ import {
   ChefHat,
   FileDigit,
   LogOut,
+  MonitorUp,
   RefreshCcw,
   Settings
 } from 'lucide-react'
@@ -81,6 +82,14 @@ const Menu = (): React.JSX.Element => {
           onClick={() => navigate('/terminal/')}
         />
       </Tooltip> */}
+      <Tooltip title="Balcão">
+        <Button
+          icon={<MonitorUp />}
+          onClick={() => navigate('/balcao')}
+          shape="circle"
+          size="large"
+        />
+      </Tooltip>
       <Tooltip title="Mesas">
         <Button
           icon={<Armchair />}
@@ -246,14 +255,13 @@ export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
   const { restaurant } = useAuth()
   const { selectedCashier } = useCashier()
   const version = jsonPackage.version
-  const navigate = useNavigate()
   useHotkeys(['t', 'c'], (_, handler) => {
     switch (handler.hotkey) {
       case 't':
         // navigate('/terminal')
         break
       case 'c':
-        navigate('/comandas')
+        // navigate('/comandas')
         break
     }
   })

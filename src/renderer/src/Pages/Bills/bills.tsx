@@ -184,6 +184,12 @@ export const BillsPage: React.FC = () => {
             srtartFocus
             onSearch={(value) => {
               setSearchTerm(value)
+              if ('0' === String(Number(value))) {
+                const first = bills.filter((bill) => bill.is_open)[0]
+                if (first) {
+                  navigate(`/comandas/${first.id}`)
+                }
+              }
               const bill = bills.find((bill) => String(bill.number) === value && bill.is_open)
               if (bill) {
                 navigate(`/comandas/${bill.id}`)
