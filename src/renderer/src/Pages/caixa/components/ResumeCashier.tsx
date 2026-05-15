@@ -54,7 +54,16 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }
       }
       extra={[
         <Space key="actions" size="small">
-          <Button icon={<Printer size={16} />}>Relatório</Button>
+          <Button
+            icon={<Printer size={16} />}
+            onClick={() => {
+              window.api.openExternal(
+                `${localStorage.getItem('chefchefe@api-base-url')}/relatorio/?cashier_id=${cashier?.id}`
+              )
+            }}
+          >
+            Relatório
+          </Button>
           <Button
             danger
             type="primary"
@@ -112,6 +121,9 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }
               })
               .then(() => {
                 messageApi.success('Caixa fechado com sucesso')
+                window.api.openExternal(
+                  `${localStorage.getItem('chefchefe@api-base-url')}/relatorio/?cashier_id=${cashier?.id}`
+                )
                 window.api.reloadApp()
               })
               .catch((error) => {

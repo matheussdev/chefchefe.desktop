@@ -32,7 +32,7 @@ export const CashierPage: React.FC = () => {
         })
       hasUpdated.current = true
     }
-  }, [fetchCashier, selectedCashier])
+  }, [fetchCashier, selectedCashier, messageApi])
   return (
     <Flex
       gap={'1rem'}
