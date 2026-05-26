@@ -19,7 +19,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
     fetchTables()
     setTimeout(() => {
       form?.getFieldInstance('number')?.focus()
-    }, 300)
+    }, 200)
   }, [fetchTables, form])
   return (
     <Form
