@@ -10,6 +10,7 @@ import { useCashier } from '@renderer/hooks/useCashiers'
 import api from '@renderer/services/api'
 import { printBillReceipt } from '@renderer/utils/Printers'
 import { useHotkeys } from 'react-hotkeys-hook'
+import { getConfig } from '@renderer/services/auth'
 const { Text } = Typography
 const getPaymentMethodIcon = (method: string): React.ReactNode => {
   switch (method) {
@@ -116,7 +117,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, orders }) => {
       form={form}
       onFinish={() => {
         setLoadingFinish(true)
-        const savedCode = localStorage.getItem('chefchefe@terminal-saved-code') || ''
+        const savedCode = getConfig('terminal-saved-code') || ''
         if (!savedCode) {
           messageApi.error(
             'Código do caixa não encontrado. Por favor, registre um código para o caixa nas configurações.'

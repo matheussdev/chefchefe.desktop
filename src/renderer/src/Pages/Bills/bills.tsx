@@ -2,12 +2,12 @@ import { BillCard } from '@renderer/components/BillCard'
 import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
 import { Button, Flex, Modal, Spin, Tag, Typography } from 'antd'
-import dayjs from 'dayjs'
 import { Plus } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BillFormPage } from './form'
 import { useHotkeys } from 'react-hotkeys-hook'
+import { useCashier } from '@renderer/hooks/useCashiers'
 const { Text } = Typography
 
 export const BillsPage: React.FC = () => {
@@ -16,6 +16,7 @@ export const BillsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('open')
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
+  const { selectedCashier } = useCashier()
   const navigate = useNavigate()
   const [openBillModal, setOpenBillModal] = useState(false)
 
@@ -100,7 +101,7 @@ export const BillsPage: React.FC = () => {
               setLoading(true)
               fetchBills({
                 is_open: false,
-                closed_at__gte: dayjs().subtract(8, 'hours').toISOString()
+                cashier_id: selectedCashier?.id
               })
                 .catch(() => {
                   setLoading(false)
@@ -112,26 +113,6 @@ export const BillsPage: React.FC = () => {
           >
             Fechadas{' '}
             {statusFilter === 'closed' ? `(${bills.filter((bill) => !bill.is_open).length})` : ''}
-          </Tag>
-          <Tag
-            style={{
-              borderRadius: '10px',
-              fontSize: '0.8rem',
-              cursor: 'pointer'
-            }}
-            color={statusFilter === 'all' ? 'blue' : 'default'}
-            variant={statusFilter === 'all' ? 'outlined' : 'filled'}
-            onClick={() => {
-              setStatusFilter('all')
-              setLoading(true)
-              fetchBills({
-                closed_at__gte: dayjs().subtract(8, 'hours').toISOString()
-              }).finally(() => {
-                setLoading(false)
-              })
-            }}
-          >
-            Todas {statusFilter === 'all' ? `(${bills.length})` : ''}
           </Tag>
           <Button
             onClick={() => {

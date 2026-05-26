@@ -1,18 +1,19 @@
 import { Container } from '@renderer/components/Container'
 import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
-import { Bill, Product } from '@renderer/types'
+import { BillDetail, Order, Product } from '@renderer/types'
 import { Flex, message } from 'antd'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ProductsSelectTable } from './components/productsSelctTable'
 import { OrdersResum } from './components/ordersResum'
 import { OrderModal } from './components/orderModal'
 import { useHotkeys } from 'react-hotkeys-hook'
+import api from '@renderer/services/api'
 
 export const TerminalSelectedPage: React.FC = () => {
   const { products, fetchProducts, fetchBillById } = useBill()
-  const [bill, setBill] = useState<Bill | null>(null)
+  const [bill, setBill] = useState<BillDetail | null>(null)
   const [loadingBill, setLoadingBill] = useState(false)
   const [loadingProducts, setLoadingProducts] = useState(false)
   const { id: billId } = useParams()
@@ -20,12 +21,30 @@ export const TerminalSelectedPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [, contextHolder] = message.useMessage()
+  const [loadingOrders, setLoadingOrders] = React.useState(false)
+  const [orders, setOrders] = React.useState<Order[]>([])
+  const fetchOrders = useCallback((id: string) => {
+    setLoadingOrders(true)
+    api
+      .get(`v1/desktop/operation/bill-orders`, {
+        params: {
+          bill_id: id
+        }
+      })
+      .then((response) => {
+        setOrders(response.data)
+      })
+      .finally(() => {
+        setLoadingOrders(false)
+      })
+  }, [])
   useEffect(() => {
     if (!hasUpdatedBills.current && billId) {
       setLoadingBill(true)
       fetchBillById(billId)
         .then((data) => {
           setBill(data)
+          fetchOrders(data.id)
         })
         .finally(() => {
           setLoadingBill(false)
@@ -43,7 +62,7 @@ export const TerminalSelectedPage: React.FC = () => {
         })
       hasUpdatedBills.current = true
     }
-  }, [fetchProducts, fetchBillById, billId])
+  }, [fetchProducts, fetchBillById, billId, fetchOrders])
   const filteredProducts = (value: string) =>
     products.filter(
       (product) =>
@@ -113,7 +132,7 @@ export const TerminalSelectedPage: React.FC = () => {
           }}
         >
           <SearchBox placeholder="Buscar produto" type="text" onSearch={onSearch} />
-          <OrdersResum loadingBill={loadingBill} bill={bill} />
+          <OrdersResum loadingBill={loadingOrders} orders={orders} />
         </Flex>
       )}
       <OrderModal
@@ -123,13 +142,7 @@ export const TerminalSelectedPage: React.FC = () => {
         onSuccess={(order) => {
           setSelectedProduct(null)
           setSearchTerm('')
-          setBill((prev) => {
-            if (!prev) return prev
-            return {
-              ...prev,
-              orders: [order, ...(prev?.orders || [])]
-            }
-          })
+          setOrders((prev) => [order, ...prev])
         }}
       />
     </Container>

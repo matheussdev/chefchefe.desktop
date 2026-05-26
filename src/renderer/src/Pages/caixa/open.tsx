@@ -1,5 +1,4 @@
-import api from '@renderer/services/api'
-import { errorActions } from '@renderer/utils'
+import { useCashier } from '@renderer/hooks/useCashiers'
 import { brlToNumber, formatToBRL } from '@renderer/utils/currency'
 import { Button, Card, Flex, Form, FormInstance, Input, message, Result, theme } from 'antd'
 import { Inbox, TagIcon } from 'lucide-react'
@@ -9,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 export const OpenCashierPage: React.FC = () => {
   const form = useRef<FormInstance>(null)
   const [loading, setLoading] = useState(false)
+  const { openCashier } = useCashier()
   const navigate = useNavigate()
   const [messageApi, contextHolder] = message.useMessage()
   return (
@@ -46,20 +46,17 @@ export const OpenCashierPage: React.FC = () => {
             layout="vertical"
             ref={form}
             onFinish={(values) => {
-              api
-                .post('v1/desktop/cashiers/', {
-                  ...values,
-                  initial_value: brlToNumber(values.initial_value)
-                })
+              setLoading(true)
+              openCashier({
+                ...values,
+                initial_value: brlToNumber(values.initial_value)
+              })
                 .then(() => {
                   messageApi.success('Caixa aberto com sucesso!')
                   navigate('/caixa')
                 })
                 .catch((error) => {
-                  errorActions
-                  messageApi.error(
-                    error.response?.data?.detail || 'Erro ao abrir caixa, tente novamente.'
-                  )
+                  messageApi.error(error)
                 })
                 .finally(() => {
                   setLoading(false)

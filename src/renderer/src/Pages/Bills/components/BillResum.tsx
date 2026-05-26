@@ -1,12 +1,12 @@
 import React from 'react'
 import { Card, Flex, Tag, Typography } from 'antd'
 import { Clock, FileDigit, HandPlatter, IdCard, Utensils } from 'lucide-react'
-import { Bill } from '@renderer/types'
+import { BillDetail } from '@renderer/types'
 import dayjs from 'dayjs'
 const { Text } = Typography
 
 interface BillResumProps {
-  bill: Bill | null
+  bill: BillDetail | null
   loading?: boolean
 }
 
@@ -67,11 +67,11 @@ export const BillResum: React.FC<BillResumProps> = ({ bill, loading }) => {
           <Text>{bill?.identification}</Text>
         </Flex>
       )}
-      {bill?.table && (
+      {bill?.table_number !== null && (
         <Flex gap="0.5rem" align="center">
           <Utensils size={20} />
           <Text strong>Mesa:</Text>
-          <Text>{bill?.table}</Text>
+          <Text>{bill?.table_number}</Text>
         </Flex>
       )}
       {bill?.opened_by_name && (

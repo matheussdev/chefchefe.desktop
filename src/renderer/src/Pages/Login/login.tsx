@@ -1,12 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useState } from 'react'
-import { Button, Form, Input, message, Card, Flex, Typography, FloatButton, Modal } from 'antd'
+import {
+  Button,
+  Form,
+  Input,
+  message,
+  Card,
+  Flex,
+  Typography,
+  FloatButton,
+  Modal,
+  Select
+} from 'antd'
 import { useAuth } from '../../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { ChefHat, Settings } from 'lucide-react'
 import styled from 'styled-components'
 import { LoginParams } from '@renderer/types'
-import { getRestaurantToken } from '@renderer/services/auth'
+import { getConfig, setConfig } from '@renderer/services/auth'
 const { Text } = Typography
 
 const LogoCotainer = styled(Flex)`
@@ -58,20 +69,35 @@ export const LoginPage: React.FC = () => {
         <Form
           layout="vertical"
           onFinish={(values) => {
-            if (values.apiUrl) {
-              localStorage.setItem('chefchefe@api-base-url', values.apiUrl)
-            } else {
-              localStorage.removeItem('chefchefe@api-base-url')
+            if (values.baseURL) {
+              setConfig('baseURL', values.baseURL)
+            }
+            if (values.http) {
+              setConfig('http', values.http)
+            }
+            if (values.schema) {
+              setConfig('schema', values.schema)
             }
             window.api.reloadApp()
           }}
         >
+          <Form.Item label="HTTP" name="http" initialValue={getConfig('http') || 'http'}>
+            <Select
+              size="large"
+              placeholder="HTTP"
+              options={[
+                { label: 'http', value: 'http' },
+                { label: 'https', value: 'https' }
+              ]}
+            />
+          </Form.Item>
+          <Form.Item label="Subdomínio" name="schema" initialValue={getConfig('schema') || ''}>
+            <Input size="large" placeholder="Subdomínio" />
+          </Form.Item>
           <Form.Item
-            label="Url da API"
-            name="apiUrl"
-            initialValue={
-              localStorage.getItem('chefchefe@api-base-url') || 'http://localhost:8001/api'
-            }
+            label="URL da API"
+            name="baseURL"
+            initialValue={getConfig('baseURL') || 'localhost:8000/api'}
           >
             <Input size="large" placeholder="Url da API" />
           </Form.Item>
@@ -122,28 +148,8 @@ export const LoginPage: React.FC = () => {
               </Text>
             </Flex>
           </LogoCotainer>
-          <Form
-            layout="vertical"
-            name="basic"
-            onFinish={handleLogin}
-            initialValues={{
-              restaurant_token: getRestaurantToken()
-            }}
-          >
+          <Form layout="vertical" name="basic" onFinish={handleLogin}>
             <>
-              <Form.Item
-                name="restaurant_token"
-                required
-                label="Token do Restaurante"
-                rules={[
-                  {
-                    required: true,
-                    message: 'Por favor, insira o token do restaurante!'
-                  }
-                ]}
-              >
-                <Input size="large" placeholder="Token do Restaurante" />
-              </Form.Item>
               <Form.Item
                 name="email"
                 required

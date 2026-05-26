@@ -3,6 +3,7 @@ import React from 'react'
 import { useCashier } from '@renderer/hooks/useCashiers'
 import { Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { setConfig } from '@renderer/services/auth'
 
 export const CashierConfigs: React.FC = () => {
   const { cashiers, selectedCashier } = useCashier()
@@ -17,7 +18,7 @@ export const CashierConfigs: React.FC = () => {
           value: cashier.id
         }))}
         onChange={(value) => {
-          localStorage.setItem('@chefchefe:cashier_id', value || '')
+          setConfig('selected_cashier_id', value || '')
           window.api.reloadApp()
         }}
         value={selectedCashier?.id}

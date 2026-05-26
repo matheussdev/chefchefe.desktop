@@ -17,6 +17,7 @@ import api from '@renderer/services/api'
 import { currenyFormat } from '@renderer/utils'
 import { printOrderReceipt } from '@renderer/utils/Printers'
 import dayjs from 'dayjs'
+import { getConfig } from '@renderer/services/auth'
 const { Text } = Typography
 interface OrderModalProps {
   selectedProduct: Product | null
@@ -88,7 +89,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
 }) => {
   const [messageApi, contextHolder] = message.useMessage()
   const [loadingAdd, setLoadingAdd] = React.useState(false)
-  const savedCode = localStorage.getItem('chefchefe@terminal-saved-code') || ''
+  const savedCode = getConfig('terminal-saved-code') || ''
   const [complementsToAdd, setComplementsToAdd] = React.useState<ComplementToAdd[]>([])
   const disabled_to_add = React.useMemo(() => {
     if (!selectedProduct) return true
@@ -131,7 +132,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               notes: response?.data?.notes,
               date: dayjs(response?.data?.created).format('DD/MM/YYYY HH:mm:ss')
             },
-            type: 'first' as "first" | "reprint"
+            type: 'first' as 'first' | 'reprint'
           }
           if (response.data?.printer_name) {
             printOrderReceipt(data)

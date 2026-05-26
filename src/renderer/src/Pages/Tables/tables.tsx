@@ -5,14 +5,15 @@ import { useBill } from '@renderer/hooks/useBills'
 const { Text } = Typography
 export const TablesPage: React.FC = () => {
   const token = theme.useToken().token
-  const { tables, fetchTables } = useBill()
+  const { tables, fetchTables, bills, fetchBills } = useBill()
   const render = React.useRef(false)
   React.useEffect(() => {
     if (!render.current) {
       fetchTables()
+      fetchBills({ is_open: true })
       render.current = true
     }
-  }, [fetchTables])
+  }, [fetchTables, fetchBills])
   return (
     <Flex
       style={{
@@ -52,7 +53,7 @@ export const TablesPage: React.FC = () => {
               fontSize: '0.8rem'
             }}
           >
-            Livres {tables.filter((table) => table.count === 0).length}
+            Livres {tables.filter((table) => !bills.some((bill) => bill.table === table.id)).length}
           </Tag>
           <Tag
             style={{
@@ -61,7 +62,8 @@ export const TablesPage: React.FC = () => {
             }}
             color="red"
           >
-            Ocupadas {tables.filter((table) => table.count > 0).length}
+            Ocupadas{' '}
+            {tables.filter((table) => bills.some((bill) => bill.table === table.id)).length}
           </Tag>
         </Flex>
         <div
@@ -100,13 +102,17 @@ export const TablesPage: React.FC = () => {
                       fontSize: '0.7rem'
                     }}
                   >
-                    {table.count > 0 ? 'Ocupada' : 'Livre'}
+                    {bills.filter((bill) => bill.table === table.id).length > 0
+                      ? 'Ocupada'
+                      : 'Livre'}
                   </Text>
                 </Flex>
                 <Avatar
                   style={{
                     backgroundColor:
-                      table.count > 0 ? token.colorErrorBgFilledHover : token.colorPrimary,
+                      bills.filter((bill) => bill.table === table.id).length > 0
+                        ? token.colorErrorBgFilledHover
+                        : token.colorPrimary,
                     color: token.colorTextLightSolid,
                     fontWeight: 'bold'
                   }}

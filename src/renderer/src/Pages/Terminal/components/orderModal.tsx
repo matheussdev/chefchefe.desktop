@@ -18,6 +18,7 @@ import { currenyFormat } from '@renderer/utils'
 import { printOrderReceipt } from '@renderer/utils/Printers'
 import dayjs from 'dayjs'
 import { brlToNumber, formatToKilos } from '@renderer/utils/currency'
+import { getConfig } from '@renderer/services/auth'
 const { Text } = Typography
 interface OrderModalProps {
   selectedProduct: Product | null
@@ -88,7 +89,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
   const [form] = Form.useForm()
   const [messageApi, contextHolder] = message.useMessage()
   const [loadingAdd, setLoadingAdd] = React.useState(false)
-  const savedCode = localStorage.getItem('chefchefe@terminal-saved-code') || ''
+  const savedCode = getConfig('terminal-saved-code') || ''
   const [complementsToAdd, setComplementsToAdd] = React.useState<ComplementToAdd[]>([])
   const disabled_to_add = React.useMemo(() => {
     if (!selectedProduct) return true
@@ -108,7 +109,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
       setLoadingAdd(true)
       console.log('values', values)
       api
-        .post('v1/desktop/orders/', {
+        .post('v1/desktop/operation/orders/', {
           ...values,
           code: savedCode || values.code,
           quantity: brlToNumber(values.quantity.toString()),
@@ -173,6 +174,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
     <Modal
       open={!!selectedProduct}
       onCancel={onClose}
+      closeIcon={false}
       title={selectedProduct?.name}
       destroyOnHidden
       footer={

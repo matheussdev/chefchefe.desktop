@@ -170,7 +170,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           change_method: change >= 0 ? selectedChangeMethod : undefined
         }
         api
-          .post('/v1/desktop/finish-bills/', {
+          .post('/v1/desktop/operation/finish-bills/', {
             ...datasend
           })
           .then(async () => {

@@ -1,51 +1,18 @@
 import React, { useCallback, useEffect } from 'react'
-import { Button, Table, Tag, message} from 'antd'
+import { Button, Table, Tag, message } from 'antd'
 import api from '../../../services/api'
 import { darkTheme } from '../../../theme'
 import { formatCurrency } from '@renderer/utils/currency'
 import { Sale } from '@renderer/types'
 import dayjs from 'dayjs'
-import { ArrowDown, ArrowUp, Banknote, CreditCard, Edit2, QrCode, Wallet } from 'lucide-react'
-
-const paymentsMap = (method: string) => {
-  switch (method) {
-    case 'CASH':
-      return {
-        icon: <Banknote size={16} style={{ marginBottom: -4 }} />,
-        color: 'green',
-        title: 'Dinheiro'
-      }
-    case 'CREDIT_CARD':
-      return {
-        icon: <CreditCard size={16} style={{ marginBottom: -4 }} />,
-        color: 'blue',
-        title: 'Cartão de Crédito'
-      }
-    case 'DEBIT_CARD':
-      return {
-        icon: <CreditCard size={16} style={{ marginBottom: -4 }} />,
-        color: 'orange',
-        title: 'Cartão de Débito'
-      }
-    case 'PIX':
-      return {
-        icon: <QrCode size={16} style={{ marginBottom: -4 }} />,
-        color: 'purple',
-        title: 'Pix'
-      }
-    default:
-      return {
-        icon: <Wallet size={16} style={{ marginBottom: -4 }} />,
-        color: 'purple',
-        title: method
-      }
-  }
-}
+import { ArrowDown, ArrowUp, Edit2 } from 'lucide-react'
+import { paymentsMap } from '@renderer/utils/paymentsMethods'
 
 interface ListRecivedPaymentsProps {
   cashierId: string
+  isOpen?: boolean
 }
-export const ListRecivedPayments: React.FC<ListRecivedPaymentsProps> = ({ cashierId }) => {
+export const ListRecivedPayments: React.FC<ListRecivedPaymentsProps> = ({ cashierId, isOpen }) => {
   const [data, setData] = React.useState<Sale[]>([])
   const [loading, setLoading] = React.useState(false)
   const [totalCount, setTotalCount] = React.useState(0)
@@ -54,7 +21,7 @@ export const ListRecivedPayments: React.FC<ListRecivedPaymentsProps> = ({ cashie
   const fetchSales = useCallback((id: string, page: number, pageSize: number) => {
     setLoading(true)
     api
-      .get(`v1/desktop/transactions/?cashier=${id}&page=${page}&page_size=${pageSize}`)
+      .get(`v1/desktop/financial/transactions/?cashier=${id}&page=${page}&page_size=${pageSize}`)
       .then((response) => {
         setData(response.data.results)
         setTotalCount(response.data.count)
@@ -75,11 +42,12 @@ export const ListRecivedPayments: React.FC<ListRecivedPaymentsProps> = ({ cashie
       fetchSales(cashierId, page, pageSize)
       hasUpdated.current = true
     }
-  }, [cashierId, fetchSales])
+  }, [cashierId, fetchSales, page, pageSize])
 
   return (
     <Table
       size="small"
+      rowKey={(record) => record.id}
       columns={[
         {
           dataIndex: 'amount',
@@ -109,7 +77,7 @@ export const ListRecivedPayments: React.FC<ListRecivedPaymentsProps> = ({ cashie
           render: (payment, record) => {
             const { icon, color } = paymentsMap(record.payment_method_method)
             return (
-              <Tag color={color}>
+              <Tag color={color} variant="outlined">
                 {icon} {payment}
               </Tag>
             )
@@ -127,6 +95,7 @@ export const ListRecivedPayments: React.FC<ListRecivedPaymentsProps> = ({ cashie
           render: (amount) => `${formatCurrency(Number(amount))}`
         },
         {
+          hidden: !isOpen,
           title: '',
           width: '50px',
           key: 'action',

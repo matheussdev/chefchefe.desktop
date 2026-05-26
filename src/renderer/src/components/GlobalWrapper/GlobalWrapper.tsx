@@ -31,13 +31,13 @@ interface GlobalWrapperProps {
 }
 import jsonPackage from '../../../../../package.json'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { logout } from '@renderer/services/auth'
+import { getConfig, logout, setConfig } from '@renderer/services/auth'
 const { Text, Title } = Typography
 
 const Menu = (): React.JSX.Element => {
   const [openConfig, setOpenConfig] = React.useState(false)
   const [defaultOperatorCode, setDefaultOperatorCode] = React.useState(
-    localStorage.getItem('chefchefe@terminal-saved-code') || ''
+    getConfig('terminal-saved-code') || ''
   )
   const navigate = useNavigate()
   const [ports, setPorts] = useState<
@@ -74,14 +74,14 @@ const Menu = (): React.JSX.Element => {
           size="large"
         />
       </Tooltip>
-      {/* <Tooltip title="Terminal de pedidos">
+      <Tooltip title="Terminal de pedidos">
         <Button
           icon={<MonitorUp />}
           shape="circle"
           size="large"
           onClick={() => navigate('/terminal/')}
         />
-      </Tooltip> */}
+      </Tooltip>
       <Tooltip title="Balcão">
         <Button
           icon={<MonitorUp />}
@@ -114,6 +114,7 @@ const Menu = (): React.JSX.Element => {
         placement="right"
         onClose={() => setOpenConfig(false)}
         open={openConfig}
+        size={600}
       >
         {defaultOperatorCode && (
           <Alert
@@ -124,7 +125,7 @@ const Menu = (): React.JSX.Element => {
               <Button
                 type="text"
                 onClick={() => {
-                  localStorage.removeItem('chefchefe@terminal-saved-code')
+                  setConfig('terminal-saved-code', '')
                   setDefaultOperatorCode('')
                 }}
               >
@@ -137,33 +138,43 @@ const Menu = (): React.JSX.Element => {
           layout="vertical"
           onFinish={async (values) => {
             if (values.defaultOperatorCode) {
-              localStorage.setItem('chefchefe@terminal-saved-code', values.defaultOperatorCode)
+              setConfig('terminal-saved-code', values.defaultOperatorCode)
               setDefaultOperatorCode(values.defaultOperatorCode)
             }
             if (values.printServer) {
-              localStorage.setItem('chefchefe@print-server-enabled', 'true')
+              setConfig('print-server-enabled', 'true')
             } else {
-              localStorage.removeItem('chefchefe@print-server-enabled')
+              setConfig('print-server-enabled', 'false')
             }
             if (values.printTimeout) {
-              localStorage.setItem('chefchefe@print-timeout', values.printTimeout)
+              setConfig('print-timeout', values.printTimeout)
             } else {
-              localStorage.removeItem('chefchefe@print-timeout')
+              setConfig('print-timeout', '5')
             }
             if (values.idPc) {
-              localStorage.setItem('chefchefe@id-pc', values.idPc)
+              setConfig('id-pc', values.idPc)
             } else {
-              localStorage.removeItem('chefchefe@id-pc')
+              setConfig('id-pc', '')
             }
-            if (values.apiBaseUrl) {
-              localStorage.setItem('chefchefe@api-base-url', values.apiBaseUrl)
+            if (values.http) {
+              setConfig('http', values.http)
             } else {
-              localStorage.removeItem('chefchefe@api-base-url')
+              setConfig('http', 'http')
+            }
+            if (values.schema) {
+              setConfig('schema', values.schema)
+            } else {
+              setConfig('schema', '')
+            }
+            if (values.baseURL) {
+              setConfig('baseURL', values.baseURL)
+            } else {
+              setConfig('baseURL', 'localhost:8000/api')
             }
             if (values.scalePort) {
-              localStorage.setItem('chefchefe@terminal-scale-port', values.scalePort)
+              setConfig('terminal-scale-port', values.scalePort)
             } else {
-              localStorage.removeItem('chefchefe@terminal-scale-port')
+              setConfig('terminal-scale-port', '')
             }
             messageApi.success('Configurações salvas com sucesso!')
             window.api.reloadApp()
@@ -172,41 +183,52 @@ const Menu = (): React.JSX.Element => {
           <Form.Item label="Código de operador padrão" name="defaultOperatorCode">
             <Input size="large" placeholder="Código de operador padrão" />
           </Form.Item>
-          <Form.Item
-            label="ID_PC"
-            name="idPc"
-            initialValue={localStorage.getItem('chefchefe@id-pc') || ''}
-          >
+          <Form.Item label="ID_PC" name="idPc" initialValue={getConfig('id-pc') || ''}>
             <Input size="large" placeholder="ID_PC" />
           </Form.Item>
-          <Form.Item
-            label="Servidor de impressão"
-            name="printServer"
-            valuePropName="checked"
-            initialValue={localStorage.getItem('chefchefe@print-server-enabled') === 'true'}
-          >
-            <Switch />
-          </Form.Item>
-          <Form.Item
-            label="Tempo de impressão (segundos)"
-            name="printTimeout"
-            initialValue={localStorage.getItem('chefchefe@print-timeout') || '5'}
-          >
-            <Input size="large" placeholder="Tempo de impressão" type="number" />
-          </Form.Item>
-          <Form.Item
-            label="Base URL da API"
-            name="apiBaseUrl"
-            initialValue={
-              localStorage.getItem('chefchefe@api-base-url') || 'http://localhost:8001/api'
-            }
-          >
-            <Input size="large" placeholder="Base URL da API" />
-          </Form.Item>
+          <Flex gap="1rem">
+            <Form.Item
+              label="Servidor de impressão"
+              name="printServer"
+              valuePropName="checked"
+              initialValue={getConfig('print-server-enabled') === 'true'}
+            >
+              <Switch />
+            </Form.Item>
+            <Form.Item
+              label="Tempo de impressão (segundos)"
+              name="printTimeout"
+              initialValue={getConfig('print-timeout') || '5'}
+            >
+              <Input size="large" placeholder="Tempo de impressão" type="number" />
+            </Form.Item>
+          </Flex>
+          <Flex gap="1rem" align="center">
+            <Form.Item label="HTTP" name="http" initialValue={getConfig('http') || 'http'}>
+              <Select
+                size="large"
+                placeholder="HTTP"
+                options={[
+                  { label: 'http', value: 'http' },
+                  { label: 'https', value: 'https' }
+                ]}
+              />
+            </Form.Item>
+            <Form.Item label="Subdomínio" name="schema" initialValue={getConfig('schema') || ''}>
+              <Input size="large" placeholder="Subdomínio" />
+            </Form.Item>
+            <Form.Item
+              label="URL da API"
+              name="baseURL"
+              initialValue={getConfig('baseURL') || 'localhost:8000/api'}
+            >
+              <Input size="large" placeholder="Url da API" />
+            </Form.Item>
+          </Flex>
           <Form.Item
             label="Porta da balança"
             name="scalePort"
-            initialValue={localStorage.getItem('chefchefe@terminal-scale-port')}
+            initialValue={getConfig('terminal-scale-port')}
           >
             <Select
               size="large"

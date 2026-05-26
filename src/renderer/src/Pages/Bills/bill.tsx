@@ -14,21 +14,22 @@ import {
   Tag,
   Typography
 } from 'antd'
-import { ChevronLeft, FileDigit, MonitorUp, Receipt } from 'lucide-react'
+import { ChevronLeft, FileDigit, Receipt } from 'lucide-react'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BillResum } from './components/BillResum'
-import { Bill } from '@renderer/types'
+import { Bill, BillDetail, Order } from '@renderer/types'
 import { BillPriceResum } from './components/BillPriceResum'
 import { BillItemsTable } from './components/BillItems'
 import { useHotkeys } from 'react-hotkeys-hook'
 import api from '@renderer/services/api'
 import { errorActions } from '@renderer/utils'
 import { printCloseCommand } from '@renderer/utils/Printers'
+import { useCashier } from '@renderer/hooks/useCashiers'
 const { Text } = Typography
 export const BillDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
-  const [bill, setBill] = React.useState<Bill | null>(null)
+  const [bill, setBill] = React.useState<BillDetail | null>(null)
   const [loadingBill, setLoadingBill] = React.useState(false)
   const { fetchBillById, fetchBills } = useBill()
   const [billsToGroup, setBillsToGroup] = React.useState<Bill[]>([])
@@ -40,11 +41,30 @@ export const BillDetailPage: React.FC = () => {
   const [cancelError, setCancelError] = React.useState<string | null>(null)
   const [loadingCancel, setLoadingCancel] = React.useState(false)
   const cancelForm = useRef<FormInstance | null>(null)
+  const [loadingOrders, setLoadingOrders] = React.useState(false)
+  const [orders, setOrders] = React.useState<Order[]>([])
+  const { selectedCashier } = useCashier()
+  const fetchOrders = useCallback((id: string) => {
+    setLoadingOrders(true)
+    api
+      .get(`v1/desktop/operation/bill-orders`, {
+        params: {
+          bill_id: id
+        }
+      })
+      .then((response) => {
+        setOrders(response.data)
+      })
+      .finally(() => {
+        setLoadingOrders(false)
+      })
+  }, [])
   const getBill = useCallback(
-    async (id: string) => {
+    async (id: string, force = false) => {
       setLoadingBill(true)
-      fetchBillById(id)
+      fetchBillById(id, force)
         .then((data) => {
+          fetchOrders(id)
           setBill(data)
           fetchBills(
             {
@@ -61,7 +81,7 @@ export const BillDetailPage: React.FC = () => {
           setLoadingBill(false)
         })
     },
-    [fetchBillById, fetchBills]
+    [fetchBillById, fetchBills, setBill, fetchOrders]
   )
   useEffect(() => {
     if (!hasUpdatedBills.current && id) {
@@ -133,20 +153,8 @@ export const BillDetailPage: React.FC = () => {
                 ))
               : bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Flex>
-          {bill?.is_open && (
-            <Button
-              style={{ marginLeft: 'auto' }}
-              icon={<MonitorUp size={16} />}
-              onClick={() => {
-                navigate(`/terminal/${id}/`)
-              }}
-              type="dashed"
-            >
-              Adicionar Pedido (F)
-            </Button>
-          )}
           <Button
-            style={{ marginLeft: bill?.is_open ? '0.5rem' : 'auto' }}
+            style={{ marginLeft: 'auto' }}
             icon={<FileDigit size={16} />}
             onClick={() => {
               setUnifyDrawerOpen(true)
@@ -184,12 +192,8 @@ export const BillDetailPage: React.FC = () => {
                 children: (
                   <BillItemsTable
                     open={bill?.is_open}
-                    items={
-                      bill?.bill_group
-                        ? bill?.bill_group.flatMap((group) => group.orders)
-                        : bill?.orders || []
-                    }
-                    loading={loadingBill}
+                    items={orders}
+                    loading={loadingOrders}
                     onCancelSuccess={() => {
                       window.api.reloadApp()
                     }}
@@ -221,35 +225,17 @@ export const BillDetailPage: React.FC = () => {
           gap={'1rem'}
         >
           <BillResum bill={bill} loading={loadingBill} />
-          {bill?.orders && bill.orders.length > 0 && bill.is_open && (
+          {orders && orders.length > 0 && bill?.is_open && (
             <BillPriceResum
-              orders={
-                bill?.bill_group
-                  ? bill?.bill_group.flatMap((group) =>
-                      group.orders.flatMap((order) => {
-                        return {
-                          quantity: Number(order.quantity),
-                          name: order.product_name,
-                          price: Number(order.total_price)
-                        }
-                      })
-                    )
-                  : bill.orders.flatMap((order) => {
-                      return {
-                        quantity: Number(order.quantity),
-                        name: order.product_name,
-                        price: Number(order.total_price)
-                      }
-                    })
-              }
+              orders={orders.flatMap((order) => {
+                return {
+                  quantity: Number(order.quantity),
+                  name: order.product_name,
+                  price: Number(order.total_price)
+                }
+              })}
               bills={bill?.bill_group ? bill?.bill_group : [bill]}
-              subtotal={
-                bill?.bill_group
-                  ? bill?.bill_group
-                      .flatMap((group) => group.orders)
-                      .reduce((acc, item) => acc + Number(item.total_price), 0)
-                  : bill?.orders.reduce((acc, item) => acc + Number(item.total_price), 0)
-              }
+              subtotal={orders?.reduce((acc, item) => acc + Number(item.total_price), 0)}
               loading={loadingBill}
             />
           )}
@@ -275,7 +261,7 @@ export const BillDetailPage: React.FC = () => {
           onFinish={(values) => {
             setLoadingUnify(true)
             api
-              .post(`/v1/desktop/bill-groups/`, {
+              .post(`/v1/desktop/operation/bill-groups/`, {
                 bills: [...(values.bills || [])],
                 group_id:
                   bill?.bill_groups && bill?.bill_groups?.length > 0
@@ -283,7 +269,8 @@ export const BillDetailPage: React.FC = () => {
                     : undefined
               })
               .then(() => {
-                getBill(id!)
+                getBill(id!, true)
+                fetchOrders(id!)
                 setUnifyDrawerOpen(false)
                 messageApi.success('Comandas unificadas com sucesso!')
               })
@@ -303,7 +290,7 @@ export const BillDetailPage: React.FC = () => {
               style={{ width: '100%', minHeight: '80px' }}
               size="large"
               options={billsToGroup.map((bill) => ({
-                label: `Comanda ${bill.number} - ${bill.table_number ? `Mesa ${bill.table_number}` : 'Sem mesa'}`,
+                label: `Comanda ${bill.number}`,
                 value: bill.id
               }))}
               mode="multiple"
@@ -355,8 +342,10 @@ export const BillDetailPage: React.FC = () => {
             setCancelError(null)
             setLoadingCancel(true)
             api
-              .patch(`/v1/desktop/bills/${id}/`, {
+              .patch(`/v1/desktop/operation/bills/${id}/`, {
                 is_open: false,
+                close_bills: bill?.bill_group ? bill.bill_group.map((group) => group.id) : [id],
+                cashier: selectedCashier?.id,
                 ...values
               })
               .then(async (res) => {
@@ -366,17 +355,13 @@ export const BillDetailPage: React.FC = () => {
                   bill: {
                     bill_number: bill?.number.toString() || '',
                     table: bill?.table_number ? `Mesa ${bill.table_number}` : 'Sem mesa',
-                    subtotal: bill?.orders
-                      ? bill?.orders.reduce((acc, item) => acc + Number(item.total_price), 0)
-                      : 0
+                    subtotal: orders.reduce((acc, item) => acc + Number(item.total_price), 0)
                   },
-                  orders: bill?.orders
-                    ? bill?.orders.map((order) => ({
-                        name: order.product_name,
-                        quantity: Number(order.quantity),
-                        price: Number(order.total_price)
-                      }))
-                    : [],
+                  orders: orders.map((order) => ({
+                    name: order.product_name,
+                    quantity: Number(order.quantity),
+                    price: Number(order.total_price)
+                  })),
                   date: new Date().toLocaleString(),
                   motivo: values.close_message || '',
                   employee: res?.data?.close_detail?.closed_by_name || ''

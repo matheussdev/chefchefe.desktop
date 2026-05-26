@@ -1,50 +1,11 @@
-import { Banknote, CreditCard, QrCode, Wallet } from 'lucide-react'
-import { Card, theme, List, Typography, Avatar, Flex } from 'antd'
+import { Wallet } from 'lucide-react'
+import { Card, theme, Typography, Avatar, Flex, Table, Tag } from 'antd'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { PmStats } from '../../../types'
 import { currenyFormat } from '../../../utils'
 import api from '@renderer/services/api'
+import { paymentsMap } from '@renderer/utils/paymentsMethods'
 const { Text, Title } = Typography
-const paymentsMap = (mehtod: string) => {
-  switch (mehtod) {
-    case 'CASH':
-      return {
-        icon: <Banknote size={25} />,
-        color: 'green-7',
-        backgroundColor: 'green-3',
-        title: 'Dinheiro'
-      }
-    case 'CREDIT_CARD':
-      return {
-        icon: <CreditCard size={25} />,
-        color: 'yellow-7',
-        backgroundColor: 'yellow-3',
-        title: 'Cartão de Crédito'
-      }
-    case 'DEBIT_CARD':
-      return {
-        icon: <CreditCard size={25} />,
-        color: 'orange-6',
-        backgroundColor: 'orange-3',
-        title: 'Cartão de Débito'
-      }
-    case 'PIX':
-      return {
-        icon: <QrCode size={25} />,
-        color: 'blue-6',
-        backgroundColor: 'blue-3',
-        title: 'Pix'
-      }
-    default:
-      return {
-        icon: <Wallet size={25} />,
-        color: 'purple-5',
-        backgroundColor: 'purple-3',
-        title: mehtod
-      }
-  }
-}
-
 interface PaymentMethodsListProps {
   cashierId?: string
 }
@@ -54,28 +15,13 @@ export const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ cashierI
   const hasUpdated = useRef(false)
   const fetchPayments = useCallback((id: string) => {
     api
-      .get('/v1/desktop/payment-methods-stats/', {
+      .get('/v1/desktop/financial/payment-methods-stats/', {
         params: {
           cashier_id: id
         }
       })
       .then((response) => {
-        setPayments(
-          response.data.payment_method_stats.map((item: any) => ({
-            ...item,
-            average_amount: Math.round(
-              (item.total_amount /
-                response.data.payment_method_stats.reduce(
-                  (acc: number, pm: any) => acc + pm.total_amount,
-                  0
-                )) *
-                100
-            ),
-            avarage_count: Math.round(
-              (item.transaction_count / response.data.total_transactions) * 100
-            )
-          }))
-        )
+        setPayments(response.data.payment_method_stats)
       })
   }, [])
   useEffect(() => {
@@ -83,11 +29,18 @@ export const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ cashierI
       fetchPayments(cashierId || '')
       hasUpdated.current = true
     }
-  }, [fetchPayments])
+  }, [fetchPayments, cashierId])
   return (
     <Card
       style={{
-        width: '100%'
+        width: '100%',
+        overflow: 'hidden'
+      }}
+      styles={{
+        body: {
+          padding: 0,
+          overflow: 'hidden'
+        }
       }}
       title={
         <Flex align="center" gap="0.5rem">
@@ -96,65 +49,82 @@ export const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ cashierI
         </Flex>
       }
     >
-      <List
+      <Table
         dataSource={payments ? payments : []}
-        style={{
-          padding: 0
-        }}
-        renderItem={(item) => (
-          <List.Item
-            extra={
-              <Flex vertical align="end" gap="0.2rem">
-                <Text
-                  style={{
-                    color: item.total_amount * 100 > 20 ? token.lime5 : token['red-4'],
-                    fontWeight: '800'
-                  }}
-                >
-                  {item.average_amount}% Faturamento
-                </Text>
-                <Text
-                  style={{
-                    color: item.total_amount * 100 > 20 ? token.lime5 : token['red-4'],
-                    fontWeight: '800'
-                  }}
-                >
-                  {item.avarage_count}% Transações
-                </Text>
-              </Flex>
-            }
-          >
-            <List.Item.Meta
-              title={
+        showHeader={false}
+        pagination={false}
+        size="small"
+        rowKey={(record) => record.method_type}
+        columns={[
+          {
+            title: '',
+            dataIndex: 'method_type',
+            key: 'method_type',
+            width: 32,
+            render: (method_type) => (
+              <Avatar
+                size={32}
+                icon={paymentsMap(method_type).icon}
+                style={{
+                  backgroundColor: token[paymentsMap(method_type).backgroundColor as 'blue-1'],
+                  color: token[paymentsMap(method_type).color as 'blue-1'],
+                  paddingBottom: 4
+                }}
+              >
+                {paymentsMap(method_type).icon}
+              </Avatar>
+            )
+          },
+          {
+            title: '',
+            dataIndex: 'total_amount',
+            key: 'total_amount',
+            render: (amount, item) => (
+              <Flex vertical>
                 <Title
                   style={{
-                    color: token.colorPrimary,
+                    color: token[paymentsMap(item.method_type).color as 'blue-1'],
                     margin: 0,
+                    marginBottom: '0',
                     fontWeight: '800'
                   }}
                   level={5}
                 >
-                  {currenyFormat(item.total_amount)}
+                  {currenyFormat(amount)}
                 </Title>
-              }
-              avatar={
-                <Avatar
-                  size="large"
-                  icon={paymentsMap(item.method_type).icon}
-                  style={{
-                    backgroundColor:
-                      token[paymentsMap(item.method_type).backgroundColor as 'blue-1'],
-                    color: token[paymentsMap(item.method_type).color as 'blue-1']
-                  }}
-                >
-                  {paymentsMap(item.method_type).icon}
-                </Avatar>
-              }
-              description={paymentsMap(item.method_type).title}
-            />
-          </List.Item>
-        )}
-      />
+                <Text type="secondary">{paymentsMap(item.method_type).title}</Text>
+              </Flex>
+            )
+          },
+          {
+            title: '',
+            dataIndex: 'transaction_count',
+            key: 'transaction_count',
+            render: (_, item) => (
+              <Flex vertical align="end" gap="0.2rem">
+                <Tag color={item.total_amount * 100 > 20 ? 'green' : 'red'} variant="solid">
+                  {Math.round(
+                    (item.total_amount /
+                      (payments ? payments.reduce((acc, pm) => acc + pm.total_amount, 0) : 1)) *
+                      100
+                  )}
+                  % Faturamento
+                </Tag>
+                <Tag color={item.total_amount * 100 > 20 ? 'green' : 'red'} variant="solid">
+                  {Math.round(
+                    (item.transaction_count /
+                      (payments
+                        ? payments.reduce((acc, pm) => acc + pm.transaction_count, 0)
+                        : 1)) *
+                      100
+                  )}
+                  % Transações
+                </Tag>
+              </Flex>
+            )
+          }
+        ]}
+      ></Table>
     </Card>
   )
 }

@@ -1,12 +1,12 @@
-import { Bill } from '@renderer/types'
+import { Order } from '@renderer/types'
 import { currenyFormat } from '@renderer/utils'
 import { Flex, Table, Typography } from 'antd'
 const { Text } = Typography
 interface OrdersResumProps {
   loadingBill: boolean
-  bill: Bill | null
+  orders?: Order[]
 }
-export const OrdersResum: React.FC<OrdersResumProps> = ({ loadingBill, bill }) => {
+export const OrdersResum: React.FC<OrdersResumProps> = ({ loadingBill, orders }) => {
   return (
     <Table
       loading={loadingBill}
@@ -14,14 +14,12 @@ export const OrdersResum: React.FC<OrdersResumProps> = ({ loadingBill, bill }) =
         <Flex justify="space-between" align="center">
           <Text strong>Pedidos</Text>
           <Text>
-            {currenyFormat(
-              bill?.orders?.reduce((acc, order) => acc + Number(order.total_price), 0) || 0
-            )}
+            {currenyFormat(orders?.reduce((acc, order) => acc + Number(order.total_price), 0) || 0)}
           </Text>
         </Flex>
       )}
       size="small"
-      dataSource={bill?.orders || []}
+      dataSource={orders || []}
       pagination={false}
       virtual
       scroll={{

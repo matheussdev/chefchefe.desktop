@@ -1,8 +1,10 @@
 import Axios, { type AxiosRequestHeaders } from 'axios'
-import { getToken } from './auth'
-
+import { getConfig, getToken } from './auth'
+const http = getConfig('http') || 'http'
+const schema = getConfig('schema') || ''
+const baseURL = getConfig('baseURL') || 'localhost:8000/api'
 const api = Axios.create({
-  baseURL: import.meta.env.VITE_API_URL || localStorage.getItem('chefchefe@api-base-url') || 'http://localhost:8001/api',
+  baseURL: `${http}://${schema}${schema ? '.' : ''}${baseURL}`,
   headers: {
     'Content-Type': 'application/json;charset=UTF-8'
   }

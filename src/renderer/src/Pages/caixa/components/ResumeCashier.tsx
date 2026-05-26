@@ -13,22 +13,29 @@ import {
   Skeleton
 } from 'antd'
 import React from 'react'
-import { Cashier } from '../../../types'
-import api from '../../../services/api'
+import { CashierDetail } from '../../../types'
 import { formatCurrency } from '@renderer/utils/currency'
 import dayjs from 'dayjs'
 import { Calendar, Inbox, Landmark, Printer, User } from 'lucide-react'
+import { useCashier } from '@renderer/hooks/useCashiers'
+import { getConfig } from '@renderer/services/auth'
 const { Text, Title } = Typography
 
 interface ResumeCashierProps {
-  cashier: Cashier | null
+  cashier: CashierDetail | null
   loading?: boolean
+  onCloseCashier?: (cashier: CashierDetail) => void
 }
 
-export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }) => {
+export const ResumeCashier: React.FC<ResumeCashierProps> = ({
+  cashier,
+  loading,
+  onCloseCashier
+}) => {
   const token = theme.useToken().token
   const [cancelModal, setCancelModal] = React.useState(false)
   const cancelForm = React.useRef<FormInstance>(null)
+  const { closeCashier } = useCashier()
   const [messageApi, contextHolder] = message.useMessage()
   return (
     <Card
@@ -57,21 +64,21 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }
           <Button
             icon={<Printer size={16} />}
             onClick={() => {
-              window.api.openExternal(
-                `${localStorage.getItem('chefchefe@api-base-url')}/relatorio/?cashier_id=${cashier?.id}`
-              )
+              alert('Em breve!')
             }}
           >
             Relatório
           </Button>
-          <Button
-            danger
-            type="primary"
-            icon={<Inbox size={16} />}
-            onClick={() => setCancelModal(true)}
-          >
-            Fechar caixa
-          </Button>
+          {cashier?.is_open && (
+            <Button
+              danger
+              type="primary"
+              icon={<Inbox size={16} />}
+              onClick={() => setCancelModal(true)}
+            >
+              Fechar caixa
+            </Button>
+          )}
         </Space>
       ]}
     >
@@ -98,55 +105,57 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({ cashier, loading }
           {dayjs(cashier?.created).format('DD/MM/YYYY HH:mm:ss')}
         </Flex>
       </Skeleton>
-      <Modal
-        title="Fechar Caixa"
-        open={cancelModal}
-        okText="Fechar caixa"
-        onCancel={() => setCancelModal(false)}
-        okButtonProps={{
-          danger: true
-        }}
-        onOk={() => {
-          cancelForm.current?.submit()
-        }}
-        confirmLoading={loading}
-      >
-        <Form
-          layout="vertical"
-          ref={cancelForm}
-          onFinish={(values) => {
-            api
-              .patch(`v1/desktop/cashiers/${cashier?.id}/`, {
-                code: values.code
-              })
-              .then(() => {
-                messageApi.success('Caixa fechado com sucesso')
-                window.api.openExternal(
-                  `${localStorage.getItem('chefchefe@api-base-url')}/relatorio/?cashier_id=${cashier?.id}`
-                )
-                window.api.reloadApp()
-              })
-              .catch((error) => {
-                message.error(error?.response?.data?.message || 'Erro ao fechar caixa')
-              })
-              .finally(() => {})
+      {cashier && (
+        <Modal
+          title="Fechar Caixa"
+          open={cancelModal}
+          okText="Fechar caixa"
+          onCancel={() => setCancelModal(false)}
+          okButtonProps={{
+            danger: true
           }}
+          onOk={() => {
+            cancelForm.current?.submit()
+          }}
+          confirmLoading={loading}
         >
-          <Form.Item
-            label="Código do operador"
-            name="code"
-            required
-            rules={[
-              {
-                required: true,
-                message: 'Informe o código do operador'
-              }
-            ]}
+          <Form
+            layout="vertical"
+            ref={cancelForm}
+            onFinish={(values) => {
+              closeCashier(cashier?.id, { code: values.code })
+                .then((resp) => {
+                  if (onCloseCashier) {
+                    onCloseCashier({
+                      ...resp,
+                      is_open: false
+                    })
+                  }
+                  messageApi.success('Caixa fechado com sucesso')
+                  setCancelModal(false)
+                })
+                .catch((error) => {
+                  message.error(error)
+                })
+                .finally(() => {})
+            }}
           >
-            <Input.Password size="large" />
-          </Form.Item>
-        </Form>
-      </Modal>
+            <Form.Item
+              label="Código do operador"
+              name="code"
+              required
+              rules={[
+                {
+                  required: true,
+                  message: 'Informe o código do operador'
+                }
+              ]}
+            >
+              <Input.Password size="large" />
+            </Form.Item>
+          </Form>
+        </Modal>
+      )}
     </Card>
   )
 }

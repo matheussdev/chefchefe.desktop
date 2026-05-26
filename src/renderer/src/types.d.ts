@@ -7,13 +7,11 @@ export interface Account {
 export interface LoginParams {
   email: string
   password: string
-  restaurant_token: string
 }
 
 export interface LoginResponse {
   access: string
   refres: string
-  restaurant_id: string
 }
 
 export interface Restaurant {
@@ -81,24 +79,24 @@ export interface BillGroup {
 
 export interface Bill {
   id: string
-  created: string
-  modified: string
-  is_active: boolean
-  is_deleted: boolean
+  is_open: boolean
   number: number
   identification: string
-  is_open: boolean
+  table: string | null
+}
+
+export interface BillDetail extends Bill {
+  created: string
+  modified: string
   opened_at: string | null
   closed_at: string | null
-  opened_by_name: string | null
-  table: string | null
-  table_number: string | null
-  restaurant: string
   opened_by: string | null
+  opened_by_name: string | null
+  table_number: string | null
   sale: string | null
-  orders?: Order[]
   bill_group?: BillGroup[] | null
   bill_groups?: string[] | null
+  table_number: number | null
 }
 
 export interface BillItems {
@@ -113,15 +111,9 @@ export interface BillItems {
 
 export interface Table {
   id: string
-  created: string
-  modified: string
-  is_active: boolean
-  is_deleted: boolean
   number: number
   title: string
   capacity: number
-  restaurant: string
-  count: number
 }
 
 export interface Complement {
@@ -168,10 +160,13 @@ export interface CartProduct {
 }
 
 export interface Cashier {
+  created: string
   id: string
   identification: string
+  initial_value: string
   is_open: boolean
-  created: string
+}
+export interface CashierDetail extends Cashier {
   closed_at: string | null
   opened_by_name: string
   closed_by_name: string | null

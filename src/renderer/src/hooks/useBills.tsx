@@ -1,21 +1,39 @@
 import api from '@renderer/services/api'
-import { Bill, Table, Product } from '@renderer/types'
+import { getCache, setCache } from '@renderer/services/auth'
+import { Bill, Table, Product, BillDetail } from '@renderer/types'
 import { errorActions } from '@renderer/utils'
-import { AnyObject } from 'antd/es/_util/type'
 import { createContext, type ReactNode, useCallback, useContext, useState } from 'react'
 
 interface BillProviderProps {
   children: ReactNode
 }
 
+interface BillParams {
+  cashier_id?: string
+  table_id?: string
+  is_open?: boolean
+  paginated?: boolean
+  free_group?: boolean
+  current_group?: string
+}
+
+interface OpenBillParams {
+  number: number
+  table?: string
+  identification?: string
+  code: string
+}
+
 interface BillContextData {
   bills: Bill[]
-  fetchBills: (params?: AnyObject, updateBills?: boolean) => Promise<Bill[]>
-  fetchBillById: (id: string) => Promise<Bill>
+  fetchBills: (params?: BillParams, updateBills?: boolean) => Promise<Bill[]>
+  fetchBillById: (id: string, force?: boolean) => Promise<BillDetail>
   fetchTables: () => Promise<Table[] | Table>
   tables: Table[]
   products: Product[]
   fetchProducts: () => Promise<Product[] | Product>
+  openBill: (params: OpenBillParams) => Promise<BillDetail>
+  selectedBill: BillDetail | null
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -23,13 +41,17 @@ export const BillContext = createContext<BillContextData>({} as BillContextData)
 
 export function BillProvider({ children }: Readonly<BillProviderProps>): React.JSX.Element {
   const [bills, setBills] = useState<Bill[]>([])
+  const [selectedBill, setSelectedBill] = useState<BillDetail | null>(null)
   const [tables, setTables] = useState<Table[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const fetchBills = useCallback(
-    async (params?: AnyObject, updateBills: boolean = true): Promise<Bill[]> => {
+    async (params?: BillParams, updateBills: boolean = true): Promise<Bill[]> => {
       return new Promise<Bill[]>((resolve, reject) => {
+        if (updateBills) {
+          setSelectedBill(null)
+        }
         api
-          .get('v1/desktop/bills/', {
+          .get('v1/desktop/operation/bills/', {
             params: {
               paginated: false,
               ...params
@@ -49,15 +71,18 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
     },
     []
   )
-  const fetchTables = useCallback(async (): Promise<Table[] | Table> => {
-    return new Promise<Table[] | Table>((resolve, reject) => {
+  const fetchTables = useCallback(async (): Promise<Table[]> => {
+    return new Promise<Table[]>((resolve, reject) => {
+      const cachedTables = getCache('tables')
+      if (cachedTables) {
+        setTables(cachedTables as Table[])
+        resolve(cachedTables as Table[])
+        return
+      }
       api
-        .get('v1/desktop/tables/', {
-          params: {
-            paginated: false
-          }
-        })
+        .get('v1/desktop/operation/tables/')
         .then((response) => {
+          setCache('tables', response.data, 60 * 60 * 3) // Cache por 1 hora
           setTables(response.data)
           resolve(response.data)
         })
@@ -67,19 +92,28 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
         })
     })
   }, [])
-  const fetchBillById = useCallback(async (id: string): Promise<Bill> => {
-    return new Promise<Bill>((resolve, reject) => {
-      api
-        .get(`v1/desktop/bills/${id}/`)
-        .then((response) => {
-          resolve(response.data)
-        })
-        .catch((error) => {
-          errorActions(error)
-          reject(error?.response?.data?.detail || 'Erro ao buscar comanda')
-        })
-    })
-  }, [])
+
+  const fetchBillById = useCallback(
+    async (id: string, force?: boolean): Promise<BillDetail> => {
+      return new Promise<BillDetail>((resolve, reject) => {
+        if (!force && selectedBill && selectedBill.id === id) {
+          resolve(selectedBill)
+          return
+        }
+        api
+          .get(`v1/desktop/operation/bills/${id}/`)
+          .then((response) => {
+            resolve(response.data)
+            setSelectedBill(response.data)
+          })
+          .catch((error) => {
+            errorActions(error)
+            reject(error?.response?.data?.detail || 'Erro ao buscar comanda')
+          })
+      })
+    },
+    [selectedBill]
+  )
   const fetchProducts = useCallback(async (): Promise<Product[] | Product> => {
     return new Promise<Product[] | Product>((resolve, reject) => {
       api
@@ -95,6 +129,37 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
     })
   }, [])
 
+  const openBill = useCallback(async (params: OpenBillParams): Promise<BillDetail> => {
+    return new Promise<BillDetail>((resolve, reject) => {
+      api
+        .post('v1/desktop/operation/bills/', {
+          ...params
+        })
+        .then((res) => {
+          setBills((prevBills) => {
+            const newBills = [
+              ...prevBills,
+              {
+                id: res.data.id,
+                number: res.data.number,
+                is_open: res.data.is_open,
+                identification: res.data.identification,
+                table: res.data.table
+              }
+            ]
+            newBills.sort((a, b) => a.number - b.number)
+            return newBills
+          })
+          setSelectedBill(res.data)
+          resolve(res.data)
+        })
+        .catch((error) => {
+          errorActions(error)
+          reject(error.response?.data?.detail || 'Erro ao criar comanda')
+        })
+    })
+  }, [])
+
   return (
     <BillContext.Provider
       value={{
@@ -102,9 +167,11 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
         fetchBillById,
         fetchTables,
         fetchProducts,
+        openBill,
         tables,
         bills,
-        products
+        products,
+        selectedBill
       }}
     >
       {children}

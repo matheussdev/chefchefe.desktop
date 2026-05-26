@@ -1,10 +1,9 @@
 import { useBill } from '@renderer/hooks/useBills'
-import api from '@renderer/services/api'
+import { getConfig } from '@renderer/services/auth'
 import { Bill } from '@renderer/types'
 import { errorActions } from '@renderer/utils'
-import { Alert, Button, Form, FormInstance, Input, InputNumber, Select } from 'antd'
-import { AnyObject } from 'antd/es/_util/type'
-import { useEffect, useRef, useState } from 'react'
+import { Alert, Button, Form, Input, InputNumber, Select } from 'antd'
+import { useEffect, useState } from 'react'
 
 interface BillFormPageProps {
   initialValue?: Bill
@@ -13,40 +12,42 @@ interface BillFormPageProps {
 export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSuccess }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const form = useRef<FormInstance>(null)
-  const { tables, fetchTables } = useBill()
-  const savedCode = localStorage.getItem('chefchefe@terminal-saved-code') || ''
-  const createBill = (values: AnyObject) => {
-    setLoading(true)
-    setError(null)
-    api
-      .post('v1/desktop/bills/', {
-        ...values,
-        code: savedCode ? savedCode : values.code
-      })
-      .then((res) => {
-        form?.current?.resetFields()
-        if (onSuccess) {
-          onSuccess(res.data)
-        }
-      })
-      .catch((error) => {
-        errorActions(error)
-        setLoading(false)
-        setError(error.response?.data?.detail || 'Erro ao criar comanda')
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  }
+  const [form] = Form.useForm()
+  const { tables, fetchTables, openBill } = useBill()
+  const savedCode = getConfig('terminal-saved-code') || ''
   useEffect(() => {
     fetchTables()
     setTimeout(() => {
-      form.current?.getFieldInstance('number')?.focus()
+      form?.getFieldInstance('number')?.focus()
     }, 300)
-  }, [fetchTables])
+  }, [fetchTables, form])
   return (
-    <Form initialValues={initialValue} onFinish={createBill} layout="vertical" ref={form}>
+    <Form
+      initialValues={initialValue}
+      onFinish={(values) => {
+        openBill({
+          number: values.number,
+          table: values.table,
+          identification: values.identification,
+          code: savedCode ? savedCode : values.code
+        })
+          .then((bill) => {
+            form?.resetFields()
+            if (onSuccess) {
+              onSuccess(bill)
+            }
+          })
+          .catch((error) => {
+            errorActions(error)
+            setError(error.response?.data?.detail || 'Erro ao criar comanda')
+          })
+          .finally(() => {
+            setLoading(false)
+          })
+      }}
+      layout="vertical"
+      form={form}
+    >
       <Form.Item
         name="number"
         label="Número da comanda"
@@ -67,7 +68,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
           min={1}
           onPressEnter={(e) => {
             e.preventDefault()
-            form.current?.getFieldInstance('identification')?.focus()
+            form?.getFieldInstance('identification')?.focus()
           }}
         />
       </Form.Item>
@@ -77,7 +78,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
           placeholder="ex: Comanda do João"
           onPressEnter={(e) => {
             e.preventDefault()
-            form.current?.getFieldInstance('table')?.focus()
+            form?.getFieldInstance('table')?.focus()
           }}
         />
       </Form.Item>
@@ -88,10 +89,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
           options={[
             { label: 'Sem mesa', value: null },
             ...tables.map((table) => ({
-              label:
-                'Mesa ' +
-                table.number +
-                (table.count && table.count > 0 ? ` Ocupada: (${table.count})` : ''),
+              label: 'Mesa ' + table.number,
               value: table.id,
               number: table.number
             }))
@@ -104,7 +102,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
             if (savedCode) {
               window.document.getElementById('button-open-bill')?.focus()
             } else {
-              form.current?.getFieldInstance('code')?.focus()
+              form?.getFieldInstance('code')?.focus()
             }
           }}
         />
@@ -142,7 +140,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
           onKeyDown={(e) => {
             if (e.key === 'ArrowUp') {
               e.preventDefault()
-              form.current?.getFieldInstance('code')?.focus()
+              form?.getFieldInstance('code')?.focus()
             }
           }}
         >

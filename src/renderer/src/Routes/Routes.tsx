@@ -9,6 +9,7 @@ import { useAuth } from '@renderer/hooks/useAuth'
 import { useCashier } from '@renderer/hooks/useCashiers'
 import api from '@renderer/services/api'
 import { printOrderReceipt } from '@renderer/utils/Printers'
+import { getConfig } from '@renderer/services/auth'
 
 interface MiddlewareProps {
   children: React.ReactNode
@@ -24,8 +25,8 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
   useEffect(() => {
     if (!hasUpadated.current) {
       getRestaurant()
-      fetchCashiers()
-      const scalePort = localStorage.getItem('chefchefe@terminal-scale-port')
+      fetchCashiers({ is_open: true })
+      const scalePort = getConfig('terminal-scale-port')
       if (scalePort) {
         window.api.connectScale(scalePort)
       }
@@ -34,7 +35,7 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
   }, [fetchCashiers, getRestaurant])
 
   const fetchToPrint = useCallback(async () => {
-    const idPc = localStorage.getItem('chefchefe@id-pc')
+    const idPc = getConfig('id-pc')
     api
       .get('/v1/desktop/print-jobs/', {
         params: {
@@ -62,8 +63,8 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
   }, [])
 
   useEffect(() => {
-    const severEnabled = localStorage.getItem('chefchefe@print-server-enabled') === 'true'
-    const printTimeout = parseInt(localStorage.getItem('chefchefe@print-timeout') || '5', 10) * 1000
+    const severEnabled = getConfig('print-server-enabled') === 'true'
+    const printTimeout = parseInt(getConfig('print-timeout') || '5', 10) * 1000
     if (severEnabled) {
       const interval = setInterval(() => {
         fetchToPrint()

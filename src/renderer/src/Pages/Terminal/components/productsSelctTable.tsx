@@ -1,11 +1,11 @@
-import { Bill, Product } from '@renderer/types'
+import { BillDetail, Product } from '@renderer/types'
 import { Button, Flex, Skeleton, Table, Typography } from 'antd'
 import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 const { Text } = Typography
 interface ProductsSelectTableProps {
   loadingBill: boolean
-  bill: Bill | null
+  bill: BillDetail | null
   loadingProducts: boolean
   products: Product[]
   searchTerm: string
@@ -62,17 +62,6 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
             Comanda {bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Text>
         </Skeleton>
-        <Button
-          onClick={() => {
-            navigate(`/comandas/${bill?.id}`)
-          }}
-          type="primary"
-          style={{
-            marginLeft: 'auto'
-          }}
-        >
-          Finalizar Comanda (e)
-        </Button>
       </Flex>
       <Table
         loading={loadingProducts || loadingBill}

@@ -164,7 +164,7 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
             </Flex>
           )
         }}
-        rowKey={(record) => record.id}
+        rowKey={(record) => record?.id}
       />
       <Modal
         open={!!toTransfer}
@@ -194,7 +194,7 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
           onFinish={(values) => {
             setLoadingTransfer(true)
             api
-              .patch(`/v1/desktop/orders/${toTransfer?.id}/`, {
+              .patch(`/v1/desktop/operation/orders/${toTransfer?.id}/`, {
                 ...values
               })
               .then((res) => {
@@ -221,7 +221,7 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
               options={opened
                 .filter((bill) => bill.number !== toTransfer?.bill_number)
                 .map((bill) => ({
-                  label: `Comanda ${bill.number} - ${bill.table_number || 'Sem mesa'}`,
+                  label: `Comanda ${bill.number}`,
                   value: bill.id,
                   number: bill.number
                 }))}
@@ -297,7 +297,7 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
             setCancelError(null)
             setLoadingCancel(true)
             api
-              .patch(`/v1/desktop/orders/${toCancel?.id}/`, {
+              .patch(`/v1/desktop/operation/orders/${toCancel?.id}/`, {
                 status: 'CANCELED',
                 ...values
               })

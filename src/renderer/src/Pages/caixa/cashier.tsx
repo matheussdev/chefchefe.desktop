@@ -5,21 +5,20 @@ import { useNavigate } from 'react-router-dom'
 import { ResumeCashier } from './components/ResumeCashier'
 import { PaymentMethodsList } from './components/PaymentMethodsList'
 import { CashierConfigs } from './components/Configs'
-import { Cashier } from '@renderer/types'
+import { CashierDetail } from '@renderer/types'
 import { ListRecivedPayments } from './components/ListRecivedPayments'
 
 export const CashierPage: React.FC = () => {
   const { cashiers, selectedCashier, loading, fetchCashier } = useCashier()
   const [loadingCashier, setLoadingCashier] = useState(true)
-  const [cashier, setCashier] = useState<Cashier | null>(null)
+  const [cashier, setCashier] = useState<CashierDetail | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
   const navigate = useNavigate()
-  if (cashiers.length === 0 && !loading) {
-    navigate('/abrir-caixa')
-  }
   const hasUpdated = React.useRef(false)
   useEffect(() => {
-    console.log('selectedCashier', selectedCashier)
+    if (cashiers.length === 0 && !loading) {
+      navigate('/abrir-caixa')
+    }
     if (!hasUpdated.current && selectedCashier) {
       setLoadingCashier(true)
       fetchCashier(selectedCashier?.id)
@@ -32,7 +31,7 @@ export const CashierPage: React.FC = () => {
         })
       hasUpdated.current = true
     }
-  }, [fetchCashier, selectedCashier, messageApi])
+  }, [fetchCashier, selectedCashier, messageApi, navigate, cashiers, loading])
   return (
     <Flex
       gap={'1rem'}
@@ -50,8 +49,12 @@ export const CashierPage: React.FC = () => {
         vertical
         gap={'1rem'}
       >
-        <ResumeCashier cashier={cashier || null} loading={loadingCashier} />
-        {cashier && <ListRecivedPayments cashierId={cashier.id} />}
+        <ResumeCashier
+          cashier={cashier || null}
+          loading={loadingCashier}
+          onCloseCashier={(cashier) => setCashier(cashier)}
+        />
+        {cashier && <ListRecivedPayments cashierId={cashier.id} isOpen={cashier.is_open} />}
       </Flex>
       <Flex vertical gap={'1rem'} style={{ width: '100%', maxWidth: '400px' }}>
         <CashierConfigs />
