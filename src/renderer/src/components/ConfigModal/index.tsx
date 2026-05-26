@@ -122,7 +122,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
           if (values.baseURL) {
             setConfig('baseURL', values.baseURL)
           } else {
-            setConfig('baseURL', 'localhost:8000/api')
+            setConfig('baseURL', 'localhost:8000')
           }
           if (values.scalePort) {
             setConfig('terminal-scale-port', values.scalePort)
@@ -157,7 +157,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
             noStyle
             label="URL da API"
             name="baseURL"
-            initialValue={getConfig('baseURL') || 'localhost:8000/api'}
+            initialValue={getConfig('baseURL') || 'localhost:8000'}
           >
             <Input size="large" placeholder="Url da API" />
           </Form.Item>
