@@ -40,6 +40,8 @@ declare global {
 
       onUpdaterError: (callback: (_: unknown, error: string) => void) => void
 
+      onUpdaterNotAvailable: (callback: () => void) => void
+
       installUpdate: () => Promise<void>
 
       listScalePorts: () => Promise<

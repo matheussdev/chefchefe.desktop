@@ -25,6 +25,7 @@ export const OrdersResum: React.FC<OrdersResumProps> = ({ loadingBill, orders })
       scroll={{
         y: window.innerHeight - 476
       }}
+      rowKey={(record) => record.id}
       columns={[
         {
           title: 'qtd',

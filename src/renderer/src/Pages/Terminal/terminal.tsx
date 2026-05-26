@@ -50,16 +50,9 @@ export const TerminalSelectedPage: React.FC = () => {
           setLoadingBill(false)
         })
       setLoadingProducts(true)
-      fetchProducts()
-        .then((p) => {
-          setTimeout(() => {
-            const element = document.getElementById('button-product-' + p[0]?.id)
-            element?.focus()
-          }, 300)
-        })
-        .finally(() => {
-          setLoadingProducts(false)
-        })
+      fetchProducts().finally(() => {
+        setLoadingProducts(false)
+      })
       hasUpdatedBills.current = true
     }
   }, [fetchProducts, fetchBillById, billId, fetchOrders])
@@ -77,22 +70,8 @@ export const TerminalSelectedPage: React.FC = () => {
   const onSearch = (value: string) => {
     value = value.trim()
     setSearchTerm(value)
-    const filtered = filteredProducts(value)
-    if (filtered.length === 1) {
-      choseProduct(filtered[0])
-    } else {
-      setSelectedProduct(null)
-      // focus first item if exists
-      if (filtered.length > 0) {
-        const buttonElement = document.getElementById(`button-product-${filtered[0].id}`)
-        buttonElement?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest'
-        })
-        buttonElement?.focus()
-      }
-    }
   }
+
   const navigate = useNavigate()
 
   useHotkeys(['q', 'r', 'e'], async (_, handler) => {
@@ -100,11 +79,6 @@ export const TerminalSelectedPage: React.FC = () => {
       case 'q':
         navigate(-1)
         break
-      case 'r':
-        await window.api.reloadApp()
-        break
-      case 'e':
-        navigate(`/comandas/${billId}`)
     }
   })
 
@@ -131,7 +105,32 @@ export const TerminalSelectedPage: React.FC = () => {
             minWidth: '350px'
           }}
         >
-          <SearchBox placeholder="Buscar produto" type="text" onSearch={onSearch} />
+          <SearchBox
+            placeholder="Buscar produto"
+            type="text"
+            srtartFocus
+            onArrow={() => {
+              const buttonElement = document.getElementById(
+                `button-product-${filteredProducts(searchTerm)[0]?.id}`
+              )
+              buttonElement?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+              })
+              buttonElement?.focus()
+            }}
+            onTimeSearch={onSearch}
+            onSearch={() => {
+              const buttonElement = document.getElementById(
+                `button-product-${filteredProducts(searchTerm)[0]?.id}`
+              )
+              buttonElement?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+              })
+              buttonElement?.focus()
+            }}
+          />
           <OrdersResum loadingBill={loadingOrders} orders={orders} />
         </Flex>
       )}

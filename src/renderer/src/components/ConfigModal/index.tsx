@@ -1,4 +1,4 @@
-import { getConfig, setConfig } from '@renderer/services/auth'
+import { clearCache, getConfig, setConfig } from '@renderer/services/auth'
 import {
   Alert,
   Button,
@@ -13,7 +13,7 @@ import {
   Switch,
   Typography
 } from 'antd'
-import { Save } from 'lucide-react'
+import { RefreshCw, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 const { Text } = Typography
 interface ConfigModalProps {
@@ -41,7 +41,51 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
   }, [])
   const [messageApi, contextHolder] = message.useMessage()
   return (
-    <Drawer title="Configurações" placement="left" onClose={onClose} open={isOpen} size={600}>
+    <Drawer
+      title="Configurações"
+      placement="left"
+      onClose={onClose}
+      open={isOpen}
+      size={600}
+      styles={{
+        body: {
+          padding: '1rem'
+        },
+        title: {
+          marginBottom: 0
+        }
+      }}
+    >
+      <Divider
+        titlePlacement="left"
+        style={{
+          marginTop: 0
+        }}
+      >
+        Dados
+      </Divider>
+      <Flex gap="1rem" wrap="wrap" style={{ marginBottom: '1rem' }} align="center">
+        <Button
+          type="dashed"
+          icon={<RefreshCw size={16} />}
+          onClick={() => {
+            clearCache('products')
+            window.api.reloadApp()
+          }}
+        >
+          Atualizar Produtos
+        </Button>
+        <Button
+          type="dashed"
+          icon={<RefreshCw size={16} />}
+          onClick={() => {
+            clearCache('tables')
+            window.api.reloadApp()
+          }}
+        >
+          Atualizar Mesas
+        </Button>
+      </Flex>
       {contextHolder}
       <Form
         layout="vertical"
@@ -186,6 +230,18 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
             type="success"
             description={`Balança conectada`}
             style={{ marginBottom: '1rem' }}
+            action={
+              <Button
+                type="text"
+                onClick={() => {
+                  setConfig('terminal-scale-port', '')
+                  setScaleConnected(false)
+                  window.api.disconnectScale()
+                }}
+              >
+                Remover
+              </Button>
+            }
           />
         )}
         <Form.Item>

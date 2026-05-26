@@ -82,7 +82,7 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
       api
         .get('v1/desktop/operation/tables/')
         .then((response) => {
-          setCache('tables', response.data, 60 * 60 * 3) // Cache por 1 hora
+          setCache('tables', response.data, 60 * 60 * 3) // Cache por 3 horas
           setTables(response.data)
           resolve(response.data)
         })
@@ -116,10 +116,17 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
   )
   const fetchProducts = useCallback(async (): Promise<Product[] | Product> => {
     return new Promise<Product[] | Product>((resolve, reject) => {
+      const cachedProducts = getCache('products')
+      if (cachedProducts) {
+        setProducts(cachedProducts as Product[])
+        resolve(cachedProducts as Product[])
+        return
+      }
       api
         .get('v1/desktop/products/')
         .then((response) => {
           setProducts(response.data)
+          setCache('products', response.data, 60 * 60 * 3) // Cache por 3 horas
           resolve(response.data)
         })
         .catch((error) => {

@@ -22,6 +22,8 @@ const api = Object.freeze({
 
   onUpdaterError: (callback) => ipcRenderer.on('updater:error', callback),
 
+  onUpdaterNotAvailable: (callback) => ipcRenderer.on('updater:not-available', callback),
+
   installUpdate: () => ipcRenderer.invoke('updater:install'),
 
   listScalePorts: () => ipcRenderer.invoke('scale:list-ports'),

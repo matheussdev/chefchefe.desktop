@@ -1,6 +1,9 @@
+import { useBill } from '@renderer/hooks/useBills'
+import api from '@renderer/services/api'
 import { BillDetail, Product } from '@renderer/types'
-import { Button, Flex, Skeleton, Table, Typography } from 'antd'
-import { ChevronLeft } from 'lucide-react'
+import { Button, Flex, Form, message, Select, Skeleton, Space, Table, Typography } from 'antd'
+import { ChevronLeft, Save } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 const { Text } = Typography
 interface ProductsSelectTableProps {
@@ -22,6 +25,16 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
   choseProduct
 }) => {
   const navigate = useNavigate()
+  const { tables, fetchTables } = useBill()
+  const render = useRef(false)
+  useEffect(() => {
+    if (!render.current) {
+      fetchTables()
+      render.current = true
+    }
+  }, [fetchTables])
+  const [messageApi, contextHolder] = message.useMessage()
+  const [loadingChangeTable, setLoadingChangeTable] = useState(false)
   return (
     <Flex
       vertical
@@ -31,6 +44,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
       }}
       gap="1rem"
     >
+      {contextHolder}
       <Flex wrap="wrap" gap="0.5rem" align="center">
         <Skeleton
           loading={loadingBill}
@@ -61,6 +75,60 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
           >
             Comanda {bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Text>
+          <Form
+            style={{ marginLeft: 'auto' }}
+            onFinish={(values) => {
+              setLoadingChangeTable(true)
+              api
+                .patch(`v1/desktop/operation/bills/${bill?.id}/`, {
+                  table: values.table
+                })
+                .then(() => {
+                  messageApi.success('Mesa alterada com sucesso')
+                  fetchTables()
+                })
+                .catch(() => {
+                  messageApi.error('Erro ao alterar mesa')
+                })
+                .finally(() => {
+                  setLoadingChangeTable(false)
+                })
+            }}
+          >
+            <Space.Compact>
+              <Form.Item name="table" label="Mesa" noStyle initialValue={bill?.table || undefined}>
+                <Select
+                  disabled={loadingChangeTable}
+                  style={{
+                    width: 120
+                  }}
+                  placeholder="Sem mesa"
+                  options={[
+                    { label: 'Sem mesa', value: undefined },
+                    ...tables.map((table) => ({
+                      label: 'Mesa ' + table.number,
+                      value: table.id,
+                      number: table.number
+                    }))
+                  ]}
+                  showSearch={{
+                    optionFilterProp: 'number'
+                  }}
+                  onSelect={() => {
+                    window.document.getElementById('button-change-table')?.focus()
+                  }}
+                />
+              </Form.Item>
+              <Button
+                id="button-change-table"
+                icon={<Save size={16} />}
+                htmlType="submit"
+                loading={loadingChangeTable}
+              >
+                Salvar
+              </Button>
+            </Space.Compact>
+          </Form>
         </Skeleton>
       </Flex>
       <Table
@@ -107,6 +175,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
             render: (value, record, index) => (
               <Button
                 type="text"
+                disabled={loadingBill || loadingProducts}
                 id={`button-product-${record.id}`}
                 size="small"
                 onKeyDown={(e) => {

@@ -1,10 +1,7 @@
 import { autoUpdater } from 'electron-updater'
 import { BrowserWindow, ipcMain } from 'electron'
 
-function sendToRenderer(
-  event: string,
-  payload?: unknown
-) {
+function sendToRenderer(event: string, payload?: unknown) {
   const win = BrowserWindow.getAllWindows()[0]
 
   if (win) {

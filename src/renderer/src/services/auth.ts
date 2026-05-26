@@ -56,3 +56,8 @@ export const getCache: (key: string) => unknown | null = (key) => {
     return null
   }
 }
+
+export const clearCache: (key: string) => void = (key) => {
+  const keyName = `${KEY}@cache:${key}`
+  localStorage.removeItem(keyName)
+}

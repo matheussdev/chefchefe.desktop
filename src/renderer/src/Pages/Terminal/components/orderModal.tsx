@@ -403,6 +403,17 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                   const buttonElement = document.getElementById('button-add-product')
                   buttonElement?.focus()
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowLeft') {
+                    e.preventDefault()
+                    form?.getFieldInstance('quantity')?.focus()
+                  }
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault()
+                    const quantityElement = form?.getFieldInstance('notes')
+                    quantityElement?.focus()
+                  }
+                }}
               />
             </Form.Item>
           )}
@@ -417,7 +428,11 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'ArrowLeft') {
                   e.preventDefault()
-                  form?.getFieldInstance('quantity')?.focus()
+                  if (!savedCode) {
+                    form?.getFieldInstance('code')?.focus()
+                  } else {
+                    form?.getFieldInstance('quantity')?.focus()
+                  }
                 }
                 if (e.key === 'ArrowUp') {
                   e.preventDefault()
