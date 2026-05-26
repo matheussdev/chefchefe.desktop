@@ -62,7 +62,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
           marginTop: 0
         }}
       >
-        Dados
+        Dados em cache
       </Divider>
       <Flex gap="1rem" wrap="wrap" style={{ marginBottom: '1rem' }} align="center">
         <Button
