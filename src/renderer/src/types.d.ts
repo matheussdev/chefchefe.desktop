@@ -39,6 +39,7 @@ export interface User {
   name: string
   email: string
   default_code?: string | null
+  sidebar_desktop: string[]
 }
 
 interface Complement {

@@ -121,11 +121,14 @@ export const TerminalBillsPage: React.FC = () => {
               buttonElement?.focus()
             }}
             onSearch={(value) => {
-              setSearchTerm(value)
+              setSearchTerm(value.trim())
+              if (value.trim() === '') return
               const bill = bills.find((bill) => String(bill.number) === value && bill.is_open)
               if (bill) {
                 navigate(`/terminal/${bill.id}`)
-              } else {
+              } else if (
+                bills.find((bill) => String(bill.number).includes(value) && bill.is_open)
+              ) {
                 const buttonElement = document.getElementById(`bill-card-0`)
                 buttonElement?.scrollIntoView({
                   behavior: 'smooth',

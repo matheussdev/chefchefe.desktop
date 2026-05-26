@@ -34,32 +34,37 @@ const pages = [
     title: 'Caixa',
     description: 'Gerencie o caixa do seu estabelecimento',
     icon: <BanknoteArrowDown size={54} />,
-    path: '/caixa'
+    path: '/caixa',
+    permission: 'CAIXA'
   },
   {
     title: 'Comandas',
     description: 'Gerencie as comandas do seu estabelecimento',
     icon: <FileDigit size={54} />,
-    path: '/comandas'
+    path: '/comandas',
+    permission: 'COMANDAS'
   },
   {
     title: 'Terminal de pedidos',
     description: 'Gerencie o terminal de pedidos do seu estabelecimento',
     icon: <MonitorUp size={54} />,
-    path: '/terminal'
+    path: '/terminal',
+    permission: 'TERMINAL'
   },
 
   {
     title: 'Vendas Balcão',
     description: 'Gerencie as vendas do seu estabelecimento',
     icon: <ShoppingBasket size={54} />,
-    path: '/balcao'
+    path: '/balcao',
+    permission: 'BALCAO'
   },
   {
     title: 'Mesas',
     description: 'Gerencie as mesas do seu estabelecimento',
     icon: <Armchair size={54} />,
-    path: '/mesas'
+    path: '/mesas',
+    permission: 'MESAS'
   }
 ]
 
@@ -83,15 +88,17 @@ export const HomePage: React.FC = () => {
           gap: '1rem'
         }}
       >
-        {pages.map((page) => (
-          <CardItem
-            key={page.title}
-            title={page.title}
-            description={page.description}
-            icon={page.icon}
-            onClick={() => navigate(page.path)}
-          />
-        ))}
+        {pages
+          .filter((page) => user?.sidebar_desktop.includes(page.permission))
+          .map((page) => (
+            <CardItem
+              key={page.title}
+              title={page.title}
+              description={page.description}
+              icon={page.icon}
+              onClick={() => navigate(page.path)}
+            />
+          ))}
       </div>
     </Flex>
   )

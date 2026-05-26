@@ -24,57 +24,63 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import { logout } from '@renderer/services/auth'
 import { ConfigModal } from '../ConfigModal'
 const { Text, Title } = Typography
+const menu = [
+  {
+    key: 'caixa',
+    label: 'Caixa',
+    icon: <BanknoteArrowDown />,
+    path: '/caixa',
+    permission: 'CAIXA'
+  },
+  {
+    key: 'comandas',
+    label: 'Comandas',
+    icon: <FileDigit />,
+    path: '/comandas',
+    permission: 'COMANDAS'
+  },
+  {
+    key: 'terminal',
+    label: 'Terminal de pedidos',
+    icon: <MonitorUp />,
+    path: '/terminal',
+    permission: 'TERMINAL'
+  },
+  {
+    key: 'balcao',
+    label: 'Balcão',
+    icon: <ShoppingBasket />,
+    path: '/balcao',
+    permission: 'BALCAO'
+  },
+  {
+    key: 'mesas',
+    label: 'Mesas',
+    icon: <Armchair />,
+    path: '/mesas',
+    permission: 'MESAS'
+  }
+]
 
 const Menu = (): React.JSX.Element => {
   const navigate = useNavigate()
   const path = window.location.hash
+  const { user } = useAuth()
   return (
     <Flex align="center" gap={'0.5rem'}>
-      <Tooltip title="Caixa" destroyOnHidden>
-        <Button
-          icon={<BanknoteArrowDown />}
-          shape="circle"
-          size="large"
-          onClick={() => navigate('/caixa')}
-          type={path.includes('/caixa') ? 'primary' : 'default'}
-        />
-      </Tooltip>
-      <Tooltip title="Comandas" destroyOnHidden>
-        <Button
-          icon={<FileDigit />}
-          onClick={() => navigate('/comandas')}
-          shape="circle"
-          size="large"
-          type={path.includes('/comandas') ? 'primary' : 'default'}
-        />
-      </Tooltip>
-      <Tooltip title="Terminal de pedidos" destroyOnHidden>
-        <Button
-          icon={<MonitorUp />}
-          shape="circle"
-          size="large"
-          onClick={() => navigate('/terminal/')}
-          type={path.includes('/terminal') ? 'primary' : 'default'}
-        />
-      </Tooltip>
-      <Tooltip title="Balcão" destroyOnHidden>
-        <Button
-          icon={<ShoppingBasket />}
-          onClick={() => navigate('/balcao')}
-          shape="circle"
-          size="large"
-          type={path.includes('/balcao') ? 'primary' : 'default'}
-        />
-      </Tooltip>
-      <Tooltip title="Mesas" destroyOnHidden>
-        <Button
-          icon={<Armchair />}
-          onClick={() => navigate('/mesas')}
-          shape="circle"
-          size="large"
-          type={path.includes('/mesas') ? 'primary' : 'default'}
-        />
-      </Tooltip>
+      {menu
+        .filter((item) => user?.sidebar_desktop.includes(item.permission))
+        .map((item) => (
+          <Tooltip key={item.key} title={item.label} destroyOnHidden>
+            <Button
+              icon={item.icon}
+              shape="circle"
+              size="large"
+              onClick={() => navigate(item.path)}
+              type={path.includes(item.path) ? 'primary' : 'default'}
+            />
+          </Tooltip>
+        ))}
       <Tooltip title="Atualizar página" destroyOnHidden>
         <Button
           icon={<RefreshCcw />}
