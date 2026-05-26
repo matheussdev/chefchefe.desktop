@@ -36,12 +36,9 @@ export interface Restaurant {
 }
 
 export interface User {
-  id: string
   name: string
   email: string
-  first_name?: string
-  last_name?: string
-  permission: string
+  default_code?: string | null
 }
 
 interface Complement {

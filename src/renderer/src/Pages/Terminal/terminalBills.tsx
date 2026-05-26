@@ -32,6 +32,17 @@ export const TerminalBillsPage: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [fetchBills])
+
+  useEffect(() => {
+    const invervalBills = setInterval(() => {
+      fetchBills({
+        is_open: true
+      })
+    }, 60000)
+    return () => {
+      clearInterval(invervalBills)
+    }
+  }, [fetchBills])
   return (
     <Flex
       style={{
@@ -54,7 +65,7 @@ export const TerminalBillsPage: React.FC = () => {
               marginRight: '0.5rem'
             }}
           >
-            Terminal de Comandas ({bills.length})
+            Terminal de pedidos ({bills.length})
           </Text>
           <Button
             onClick={() => {
@@ -69,26 +80,63 @@ export const TerminalBillsPage: React.FC = () => {
         <div
           style={{
             width: '100%',
-            height: 'fit-content',
-            maxHeight: '100%',
+            height: '100%',
             flexWrap: 'wrap',
             flexDirection: 'row',
-            overflow: 'auto',
             gap: '0.5rem',
             display: 'flex'
           }}
         >
           {bills
-            .filter(
-              (bill) =>
-                bill.number.toString().includes(searchTerm) ||
-                bill.id.toString().includes(searchTerm)
-            )
+            .filter((bill) => searchTerm === '' || bill.number.toString().includes(searchTerm))
             .map((bill, index) => (
-              <BillCard key={index} bill={bill} onClick={() => navigate(`/terminal/${bill.id}`)} />
+              <BillCard
+                key={index}
+                index={index}
+                bill={bill}
+                onClick={() => navigate(`/terminal/${bill.id}`)}
+              />
             ))}
         </div>
       </Flex>
+
+      {window.innerWidth > 845 && (
+        <Flex
+          vertical
+          style={{
+            width: '40%',
+            maxWidth: '300px',
+            minWidth: '270px'
+          }}
+        >
+          <SearchBox
+            placeholder="Nº da comanda"
+            srtartFocus
+            onArrow={() => {
+              const buttonElement = document.getElementById(`bill-card-0`)
+              buttonElement?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+              })
+              buttonElement?.focus()
+            }}
+            onSearch={(value) => {
+              setSearchTerm(value)
+              const bill = bills.find((bill) => String(bill.number) === value && bill.is_open)
+              if (bill) {
+                navigate(`/terminal/${bill.id}`)
+              } else {
+                const buttonElement = document.getElementById(`bill-card-0`)
+                buttonElement?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'nearest'
+                })
+                buttonElement?.focus()
+              }
+            }}
+          />
+        </Flex>
+      )}
       <Modal
         open={openBillModal}
         onCancel={() => setOpenBillModal(false)}
@@ -102,28 +150,6 @@ export const TerminalBillsPage: React.FC = () => {
           }}
         />
       </Modal>
-      {window.innerWidth > 845 && (
-        <Flex
-          vertical
-          style={{
-            width: '40%',
-            maxWidth: '300px',
-            minWidth: '270px'
-          }}
-        >
-          <SearchBox
-            placeholder="Nº da comanda"
-            srtartFocus
-            onSearch={(value) => {
-              setSearchTerm(value)
-              const bill = bills.find((bill) => String(bill.number) === value && bill.is_open)
-              if (bill) {
-                navigate(`/terminal/${bill.id}`)
-              }
-            }}
-          />
-        </Flex>
-      )}
     </Flex>
   )
 }

@@ -42,6 +42,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
         (type != 'number' && handle.key.length === 1 && /\d/.test(handle.key))
       ) {
         form.current?.getFieldInstance('search')?.focus()
+        if (type === 'number' && /\D/.test(handle.key)) return
         form.current?.setFieldsValue({ search: handle.key })
       }
       if (handle.key === 'Escape') {
@@ -92,6 +93,9 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
               if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.preventDefault()
                 onArrow?.(e.key === 'ArrowUp' ? 'up' : 'down')
+              }
+              if (e.key === 'r' && type === 'number') {
+                window.api.reloadApp()
               }
             }}
             onChange={(e) => {

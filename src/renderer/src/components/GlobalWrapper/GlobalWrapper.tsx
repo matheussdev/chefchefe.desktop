@@ -1,27 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import * as S from './styles'
-import {
-  Alert,
-  Button,
-  Drawer,
-  Flex,
-  Form,
-  Input,
-  message,
-  Select,
-  Switch,
-  Tooltip,
-  Typography
-} from 'antd'
+import { Button, Dropdown, Flex, Tooltip, Typography } from 'antd'
 import {
   Armchair,
   BanknoteArrowDown,
   ChefHat,
   FileDigit,
+  Home,
   LogOut,
   MonitorUp,
   RefreshCcw,
-  Settings
+  Settings,
+  ShoppingBasket
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@renderer/hooks/useAuth'
@@ -31,242 +21,69 @@ interface GlobalWrapperProps {
 }
 import jsonPackage from '../../../../../package.json'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { getConfig, logout, setConfig } from '@renderer/services/auth'
+import { logout } from '@renderer/services/auth'
+import { ConfigModal } from '../ConfigModal'
 const { Text, Title } = Typography
 
 const Menu = (): React.JSX.Element => {
-  const [openConfig, setOpenConfig] = React.useState(false)
-  const [defaultOperatorCode, setDefaultOperatorCode] = React.useState(
-    getConfig('terminal-saved-code') || ''
-  )
   const navigate = useNavigate()
-  const [ports, setPorts] = useState<
-    {
-      path: string
-      manufacturer?: string
-    }[]
-  >([])
-  const [scaleConnected, setScaleConnected] = useState(false)
-  useEffect(() => {
-    const init = async () => {
-      window.api.listScalePorts().then(setPorts)
-      setScaleConnected(await window.api.checkConnectScale())
-    }
-    init()
-  }, [])
-  const [messageApi, contextHolder] = message.useMessage()
+  const path = window.location.hash
   return (
     <Flex align="center" gap={'0.5rem'}>
-      {contextHolder}
-      <Tooltip title="Caixa">
+      <Tooltip title="Caixa" destroyOnHidden>
         <Button
           icon={<BanknoteArrowDown />}
           shape="circle"
           size="large"
           onClick={() => navigate('/caixa')}
+          type={path.includes('/caixa') ? 'primary' : 'default'}
         />
       </Tooltip>
-      <Tooltip title="Comandas">
+      <Tooltip title="Comandas" destroyOnHidden>
         <Button
           icon={<FileDigit />}
           onClick={() => navigate('/comandas')}
           shape="circle"
           size="large"
+          type={path.includes('/comandas') ? 'primary' : 'default'}
         />
       </Tooltip>
-      <Tooltip title="Terminal de pedidos">
+      <Tooltip title="Terminal de pedidos" destroyOnHidden>
         <Button
           icon={<MonitorUp />}
           shape="circle"
           size="large"
           onClick={() => navigate('/terminal/')}
+          type={path.includes('/terminal') ? 'primary' : 'default'}
         />
       </Tooltip>
-      <Tooltip title="Balcão">
+      <Tooltip title="Balcão" destroyOnHidden>
         <Button
-          icon={<MonitorUp />}
+          icon={<ShoppingBasket />}
           onClick={() => navigate('/balcao')}
           shape="circle"
           size="large"
+          type={path.includes('/balcao') ? 'primary' : 'default'}
         />
       </Tooltip>
-      <Tooltip title="Mesas">
+      <Tooltip title="Mesas" destroyOnHidden>
         <Button
           icon={<Armchair />}
           onClick={() => navigate('/mesas')}
           shape="circle"
           size="large"
+          type={path.includes('/mesas') ? 'primary' : 'default'}
         />
       </Tooltip>
-      {/* <Tooltip title="Balança">
-        <Button icon={<Scale />} shape="circle" size="large" onClick={() => navigate('/balanca')} />
-      </Tooltip> */}
-      <Button
-        icon={<RefreshCcw />}
-        onClick={async () => await window.api.reloadApp()}
-        shape="circle"
-        size="large"
-        type="dashed"
-      />
-      <Button icon={<Settings />} onClick={() => setOpenConfig(true)} shape="circle" size="large" />
-      <Drawer
-        title="Configurações"
-        placement="right"
-        onClose={() => setOpenConfig(false)}
-        open={openConfig}
-        size={600}
-      >
-        {defaultOperatorCode && (
-          <Alert
-            type="success"
-            style={{ marginBottom: '1rem' }}
-            title={`Código de operador padrão configurado`}
-            action={
-              <Button
-                type="text"
-                onClick={() => {
-                  setConfig('terminal-saved-code', '')
-                  setDefaultOperatorCode('')
-                }}
-              >
-                Remover
-              </Button>
-            }
-          />
-        )}
-        <Form
-          layout="vertical"
-          onFinish={async (values) => {
-            if (values.defaultOperatorCode) {
-              setConfig('terminal-saved-code', values.defaultOperatorCode)
-              setDefaultOperatorCode(values.defaultOperatorCode)
-            }
-            if (values.printServer) {
-              setConfig('print-server-enabled', 'true')
-            } else {
-              setConfig('print-server-enabled', 'false')
-            }
-            if (values.printTimeout) {
-              setConfig('print-timeout', values.printTimeout)
-            } else {
-              setConfig('print-timeout', '5')
-            }
-            if (values.idPc) {
-              setConfig('id-pc', values.idPc)
-            } else {
-              setConfig('id-pc', '')
-            }
-            if (values.http) {
-              setConfig('http', values.http)
-            } else {
-              setConfig('http', 'http')
-            }
-            if (values.schema) {
-              setConfig('schema', values.schema)
-            } else {
-              setConfig('schema', '')
-            }
-            if (values.baseURL) {
-              setConfig('baseURL', values.baseURL)
-            } else {
-              setConfig('baseURL', 'localhost:8000/api')
-            }
-            if (values.scalePort) {
-              setConfig('terminal-scale-port', values.scalePort)
-            } else {
-              setConfig('terminal-scale-port', '')
-            }
-            messageApi.success('Configurações salvas com sucesso!')
-            window.api.reloadApp()
-          }}
-        >
-          <Form.Item label="Código de operador padrão" name="defaultOperatorCode">
-            <Input size="large" placeholder="Código de operador padrão" />
-          </Form.Item>
-          <Form.Item label="ID_PC" name="idPc" initialValue={getConfig('id-pc') || ''}>
-            <Input size="large" placeholder="ID_PC" />
-          </Form.Item>
-          <Flex gap="1rem">
-            <Form.Item
-              label="Servidor de impressão"
-              name="printServer"
-              valuePropName="checked"
-              initialValue={getConfig('print-server-enabled') === 'true'}
-            >
-              <Switch />
-            </Form.Item>
-            <Form.Item
-              label="Tempo de impressão (segundos)"
-              name="printTimeout"
-              initialValue={getConfig('print-timeout') || '5'}
-            >
-              <Input size="large" placeholder="Tempo de impressão" type="number" />
-            </Form.Item>
-          </Flex>
-          <Flex gap="1rem" align="center">
-            <Form.Item label="HTTP" name="http" initialValue={getConfig('http') || 'http'}>
-              <Select
-                size="large"
-                placeholder="HTTP"
-                options={[
-                  { label: 'http', value: 'http' },
-                  { label: 'https', value: 'https' }
-                ]}
-              />
-            </Form.Item>
-            <Form.Item label="Subdomínio" name="schema" initialValue={getConfig('schema') || ''}>
-              <Input size="large" placeholder="Subdomínio" />
-            </Form.Item>
-            <Form.Item
-              label="URL da API"
-              name="baseURL"
-              initialValue={getConfig('baseURL') || 'localhost:8000/api'}
-            >
-              <Input size="large" placeholder="Url da API" />
-            </Form.Item>
-          </Flex>
-          <Form.Item
-            label="Porta da balança"
-            name="scalePort"
-            initialValue={getConfig('terminal-scale-port')}
-          >
-            <Select
-              size="large"
-              onChange={() => {
-                setScaleConnected(false)
-              }}
-              options={ports.map((port) => ({
-                label: `${port.path} - ${port.manufacturer || 'Desconhecido'}`,
-                value: port.path
-              }))}
-            />
-          </Form.Item>
-          {scaleConnected && (
-            <Alert
-              type="success"
-              description={`Balança conectada`}
-              style={{ marginBottom: '1rem' }}
-            />
-          )}
-          <Form.Item>
-            <Button block type="primary" size="large" htmlType="submit">
-              Salvar
-            </Button>
-          </Form.Item>
-        </Form>
+      <Tooltip title="Atualizar página" destroyOnHidden>
         <Button
-          icon={<LogOut />}
-          onClick={() => {
-            logout()
-            window.api.reloadApp()
-          }}
-          block
-          style={{ marginTop: 'auto' }}
+          icon={<RefreshCcw />}
+          onClick={async () => await window.api.reloadApp()}
+          shape="circle"
           size="large"
-        >
-          Sair
-        </Button>
-      </Drawer>
+          type="dashed"
+        />
+      </Tooltip>
     </Flex>
   )
 }
@@ -287,16 +104,46 @@ export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
         break
     }
   })
+  const [openConfig, setOpenConfig] = useState(false)
+  const navigate = useNavigate()
   return (
     <S.Containter>
+      <ConfigModal isOpen={openConfig} onClose={() => setOpenConfig(false)} />
       <S.Navbar>
         <div id="navbar-height" />
         <div id="navbar-fixed">
           <Flex style={{ width: '100%' }} align="center" gap="0.5rem" justify="space-between">
             <Flex align="center" gap="0.5rem">
-              <div className="logo">
-                <ChefHat />
-              </div>
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: [
+                    {
+                      icon: <Home size={16} />,
+                      key: 'home',
+                      label: 'Início',
+                      onClick: () => navigate('/')
+                    },
+                    {
+                      icon: <Settings size={16} />,
+                      key: 'Configurações',
+                      label: 'Configurações',
+                      onClick: () => setOpenConfig(true)
+                    },
+
+                    {
+                      icon: <LogOut size={16} />,
+                      key: 'logout',
+                      label: 'Sair',
+                      onClick: () => logout()
+                    }
+                  ]
+                }}
+              >
+                <button className="logo">
+                  <ChefHat />
+                </button>
+              </Dropdown>
               <Flex vertical>
                 <Text strong style={{ margin: 0, lineHeight: '1rem' }}>
                   ChefChefe

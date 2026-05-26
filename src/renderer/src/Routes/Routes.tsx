@@ -17,7 +17,7 @@ interface MiddlewareProps {
 
 const Middleware = (props: MiddlewareProps): React.JSX.Element => {
   const { children } = props
-  const [loading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const { getRestaurant } = useAuth()
   const { fetchCashiers } = useCashier()
   const hasUpadated = useRef(false)
@@ -25,7 +25,14 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
   useEffect(() => {
     if (!hasUpadated.current) {
       getRestaurant()
-      fetchCashiers({ is_open: true })
+        .then(() => {
+          fetchCashiers({ is_open: true }).finally(() => {
+            setLoading(false)
+          })
+        })
+        .catch(() => {
+          setLoading(false)
+        })
       const scalePort = getConfig('terminal-scale-port')
       if (scalePort) {
         window.api.connectScale(scalePort)

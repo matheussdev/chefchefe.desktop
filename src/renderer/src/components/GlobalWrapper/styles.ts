@@ -35,6 +35,8 @@ export const Navbar = styled.div`
     border-bottom: 2px solid ${(props: any) => props.theme.token.borderColor};
   }
   .logo {
+    border: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,5 +46,11 @@ export const Navbar = styled.div`
     padding: 0.5rem;
     border-radius: 0.5rem;
     color: #fff;
+
+    &:hover {
+      opacity: 0.8;
+      transition: all 0.3s ease-in-out;
+      scale: 1.03;
+    }
   }
 `

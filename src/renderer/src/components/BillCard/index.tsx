@@ -5,12 +5,32 @@ const { Text } = Typography
 interface BillCardProps {
   bill: Bill
   onClick?: () => void
+  index?: number
 }
 
-export const BillCard: React.FC<BillCardProps> = ({ bill, onClick }) => {
+export const BillCard: React.FC<BillCardProps> = ({ bill, onClick, index }) => {
   const token = theme.useToken().token
   return (
     <Button
+      id={`bill-card-${index}`}
+      onKeyUp={(e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          const buttonElement = document.getElementById(`bill-card-${(Number(index) || 0) + 1}`)
+          buttonElement?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+          })
+          buttonElement?.focus()
+        }
+        if (e.key === 'ArrowLeft' || (e.key === 'ArrowUp' && index && index > 0)) {
+          const buttonElement = document.getElementById(`bill-card-${(Number(index) || 0) - 1}`)
+          buttonElement?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+          })
+          buttonElement?.focus()
+        }
+      }}
       style={{
         width: 'calc(20% - 0.5rem)',
         maxWidth: '180px',

@@ -129,21 +129,21 @@ export const BillsPage: React.FC = () => {
           <div
             style={{
               width: '100%',
-              height: 'fit-content',
+              height: '100%',
               maxHeight: '100%',
               flexWrap: 'wrap',
               flexDirection: 'row',
-              overflow: 'auto',
               gap: '0.5rem',
               display: 'flex',
               minHeight: '100px'
             }}
           >
             {bills
-              .filter((bill) => bill.number.toString().includes(searchTerm))
+              .filter((bill) => bill.number.toString().includes(searchTerm) || searchTerm === '')
               .map((bill, index) => (
                 <BillCard
                   key={index}
+                  index={index}
                   bill={bill}
                   onClick={() => navigate(`/comandas/${bill.id}`)}
                 />
@@ -165,15 +165,16 @@ export const BillsPage: React.FC = () => {
             srtartFocus
             onSearch={(value) => {
               setSearchTerm(value)
-              if ('0' === String(Number(value))) {
-                const first = bills.filter((bill) => bill.is_open)[0]
-                if (first) {
-                  navigate(`/comandas/${first.id}`)
-                }
-              }
               const bill = bills.find((bill) => String(bill.number) === value && bill.is_open)
               if (bill) {
                 navigate(`/comandas/${bill.id}`)
+              } else {
+                const buttonElement = document.getElementById(`bill-card-0`)
+                buttonElement?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'nearest'
+                })
+                buttonElement?.focus()
               }
             }}
           />

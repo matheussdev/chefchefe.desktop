@@ -44,7 +44,7 @@ export const LoginPage: React.FC = () => {
       setLoadingLogin(true)
       login(values)
         .then(() => {
-          navigate('/caixa')
+          navigate('/')
         })
         .catch((error) => {
           messageApi.error(error)

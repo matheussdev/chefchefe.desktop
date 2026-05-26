@@ -18,7 +18,6 @@ import { formatCurrency } from '@renderer/utils/currency'
 import dayjs from 'dayjs'
 import { Calendar, Inbox, Landmark, Printer, User } from 'lucide-react'
 import { useCashier } from '@renderer/hooks/useCashiers'
-import { getConfig } from '@renderer/services/auth'
 const { Text, Title } = Typography
 
 interface ResumeCashierProps {

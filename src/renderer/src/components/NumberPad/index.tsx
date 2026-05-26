@@ -70,7 +70,10 @@ export const NumberPad: React.FC<NumberPadProps> = ({ onClick, onClear, onDelete
           }}
           danger
           type="dashed"
-          onClick={onClear}
+          onClick={() => {
+            onClear?.()
+            onFinish?.()
+          }}
         >
           Limpar
         </Button>
@@ -83,7 +86,7 @@ export const NumberPad: React.FC<NumberPadProps> = ({ onClick, onClear, onDelete
           }}
           onClick={onFinish}
         >
-          Abrir
+          Buscar
         </Button>
       </Flex>
     </Flex>
