@@ -10,6 +10,7 @@ import { useCashier } from '@renderer/hooks/useCashiers'
 import api from '@renderer/services/api'
 import { printOrderReceipt } from '@renderer/utils/Printers'
 import { getConfig } from '@renderer/services/auth'
+import dayjs from 'dayjs'
 
 interface MiddlewareProps {
   children: React.ReactNode
@@ -34,8 +35,9 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
           setLoading(false)
         })
       const scalePort = getConfig('terminal-scale-port')
+      const scaleBoundRate = parseInt(getConfig('terminal-scale-bound-rate') || '9600', 10)
       if (scalePort) {
-        window.api.connectScale(scalePort)
+        window.api.connectScale(scalePort, scaleBoundRate)
       }
       hasUpadated.current = true
     }
@@ -44,25 +46,22 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
   const fetchToPrint = useCallback(async () => {
     const idPc = getConfig('id-pc')
     api
-      .get('/v1/desktop/print-jobs/', {
+      .get('v1/desktop/operation/print-jobs/list/', {
         params: {
+          time: dayjs().format('HH-mm-ss'),
           id_pc: idPc || undefined
         }
       })
       .then(async (response) => {
         if (response.data.found) {
-          const printJob = response.data.print_job?.payload
-          if (printJob) {
+          const printJob = response.data.print_job
+          const payload = printJob?.payload
+          if (payload) {
             try {
-              await printOrderReceipt(printJob)
-              api.patch(`/v1/desktop/print-jobs/${response.data.print_job.id}/`, {
-                status: 'SENT'
-              })
+              await printOrderReceipt(payload)
+              api.delete(`v1/desktop/operation/print-jobs/${printJob.id}/`)
             } catch (error) {
               console.error('Error printing order receipt:', error)
-              api.patch(`/v1/desktop/print-jobs/${response.data.print_job.id}/`, {
-                status: 'ERROR'
-              })
             }
           }
         }

@@ -97,7 +97,7 @@ export const LoginPage: React.FC = () => {
           <Form.Item
             label="URL da API"
             name="baseURL"
-            initialValue={getConfig('baseURL') || 'localhost:8000/api'}
+            initialValue={getConfig('baseURL') || 'chefchefe.app'}
           >
             <Input size="large" placeholder="Url da API" />
           </Form.Item>

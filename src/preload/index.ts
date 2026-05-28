@@ -28,7 +28,8 @@ const api = Object.freeze({
 
   listScalePorts: () => ipcRenderer.invoke('scale:list-ports'),
 
-  connectScale: (path: string) => ipcRenderer.invoke('scale:connect', path),
+  connectScale: (path: string, boundRate?: number) =>
+    ipcRenderer.invoke('scale:connect', path, boundRate),
 
   disconnectScale: () => ipcRenderer.invoke('scale:disconnect'),
 

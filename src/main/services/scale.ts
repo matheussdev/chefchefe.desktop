@@ -4,7 +4,6 @@ import { SerialPort } from 'serialport'
 let currentPort: SerialPort | null = null
 
 const serialConfig = {
-  baudRate: 2400,
   dataBits: 8 as const,
   stopBits: 1 as const,
   parity: 'none' as const
@@ -21,7 +20,7 @@ export async function listScalePorts(): Promise<SerialPort[]> {
   return await SerialPort.list()
 }
 
-export async function connectScale(path: string): Promise<boolean> {
+export async function connectScale(path: string, boundRate: number = 9600): Promise<boolean> {
   if (currentPort?.isOpen && currentPort.path === path) {
     console.log('Balança já conectada na porta', path)
     return true
@@ -29,6 +28,7 @@ export async function connectScale(path: string): Promise<boolean> {
 
   currentPort = new SerialPort({
     path,
+    boundRate,
     ...serialConfig
   })
 

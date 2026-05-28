@@ -2,9 +2,9 @@ import Axios, { type AxiosRequestHeaders } from 'axios'
 import { getConfig, getToken } from './auth'
 const http = getConfig('http') || 'http'
 const schema = getConfig('schema') || ''
-const baseURL = getConfig('baseURL') || 'localhost:8000/api'
+const baseURL = getConfig('baseURL') || 'chefchefe.app'
 const api = Axios.create({
-  baseURL: `${http}://${schema}${schema ? '.' : ''}${baseURL}`,
+  baseURL: `${http}://${schema}${schema ? '.' : ''}${baseURL}/api`,
   headers: {
     'Content-Type': 'application/json;charset=UTF-8'
   }
