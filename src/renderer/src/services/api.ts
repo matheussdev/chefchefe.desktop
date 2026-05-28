@@ -2,7 +2,7 @@ import Axios, { type AxiosRequestHeaders } from 'axios'
 import { getConfig, getToken } from './auth'
 const http = getConfig('http') || 'http'
 const schema = getConfig('schema') || ''
-const baseURL = getConfig('baseURL') || 'localhost:8000'
+const baseURL = getConfig('baseURL') || 'chefchefe.app'
 const api = Axios.create({
   baseURL: `${http}://${schema}${schema ? '.' : ''}${baseURL}/api`,
   headers: {

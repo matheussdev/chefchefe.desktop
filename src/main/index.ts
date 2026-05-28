@@ -174,8 +174,8 @@ ipcMain.handle('scale:list-ports', async () => {
   return await listScalePorts()
 })
 
-ipcMain.handle('scale:connect', async (_, path: string) => {
-  return await connectScale(path)
+ipcMain.handle('scale:connect', async (_, path: string, boundRate?: number) => {
+  return await connectScale(path, boundRate)
 })
 
 ipcMain.handle('scale:disconnect', async () => {

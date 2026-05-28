@@ -122,12 +122,17 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
           if (values.baseURL) {
             setConfig('baseURL', values.baseURL)
           } else {
-            setConfig('baseURL', 'localhost:8000')
+            setConfig('baseURL', 'chefchefe.app')
           }
           if (values.scalePort) {
             setConfig('terminal-scale-port', values.scalePort)
           } else {
             setConfig('terminal-scale-port', '')
+          }
+          if (values.scaleBoundRate) {
+            setConfig('terminal-scale-bound-rate', values.scaleBoundRate)
+          } else {
+            setConfig('terminal-scale-bound-rate', '9600')
           }
           messageApi.success('Configurações salvas com sucesso!')
           window.api.reloadApp()
@@ -157,7 +162,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
             noStyle
             label="URL da API"
             name="baseURL"
-            initialValue={getConfig('baseURL') || 'localhost:8000'}
+            initialValue={getConfig('baseURL') || 'chefchefe.app'}
           >
             <Input size="large" placeholder="Url da API" />
           </Form.Item>
@@ -224,6 +229,13 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
             }))}
           />
         </Form.Item>
+        <Form.Item
+          label="Velocidade da balança"
+          name="scaleBoundRate"
+          initialValue={getConfig('terminal-scale-bound-rate') || '9600'}
+        >
+          <Input size="large" placeholder="ex: 9600" type="number" />
+        </Form.Item>
         {scaleConnected && (
           <Alert
             showIcon
@@ -235,8 +247,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
                 type="text"
                 onClick={() => {
                   setConfig('terminal-scale-port', '')
+                  setConfig('terminal-scale-bound-rate', '')
                   setScaleConnected(false)
-                  window.api.disconnectScale()
+                  window.api.reloadApp()
                 }}
               >
                 Remover
