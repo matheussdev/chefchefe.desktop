@@ -51,7 +51,7 @@ declare global {
         }[]
       >
 
-      connectScale: (path: string, boundRate?: number) => Promise<void>
+      connectScale: (config: { path?: string; boundRate?: number }) => Promise<void>
 
       disconnectScale: () => Promise<void>
 

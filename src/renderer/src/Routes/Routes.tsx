@@ -39,7 +39,7 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
       const scalePort = getConfig('terminal-scale-port')
       const scaleBoundRate = parseInt(getConfig('terminal-scale-bound-rate') || '9600', 10)
       if (scalePort) {
-        window.api.connectScale(scalePort, scaleBoundRate)
+        window.api.connectScale({ path: scalePort, boundRate: scaleBoundRate })
       }
       hasUpadated.current = true
     }
