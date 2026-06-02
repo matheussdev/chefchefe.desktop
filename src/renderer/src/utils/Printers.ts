@@ -248,6 +248,14 @@ export async function printBillReceipt(payload: {
     tableHeader: [
       {
         type: 'text',
+        value: '--',
+        style: {
+          width: 0.75,
+          fontWeight: '700'
+        }
+      },
+      {
+        type: 'text',
         value: 'ITEM',
         style: {
           width: 0.75,
@@ -271,7 +279,18 @@ export async function printBillReceipt(payload: {
       {
         type: 'text',
 
-        value: `${item.quantity}x ${item.name.length > 20 ? item.name.slice(0, 25) + '...' : item.name}`,
+        value: `-`,
+
+        style: {
+          width: 0.75,
+          textAlign: 'left',
+          padding: '0'
+        }
+      },
+      {
+        type: 'text',
+
+        value: `${item.quantity}x ${item.name.length > 20 ? item.name.slice(0, 20) + '...' : item.name}`,
 
         style: {
           width: 0.75,
@@ -513,56 +532,6 @@ export async function printBillReceipt(payload: {
         {
           type: 'text',
           value: '',
-
-          style: {
-            width: 0.75,
-            textAlign: 'left',
-            fontWeight: '700',
-            border: 'none',
-
-            padding: '2px 0'
-          }
-        },
-        {
-          type: 'text',
-          value: ' ',
-          style: {
-            width: 0.25,
-            textAlign: 'right',
-            fontWeight: '700'
-          }
-        }
-      ],
-      [
-        {
-          type: 'text',
-          value: '',
-          style: {
-            width: 0.75,
-            textAlign: 'left',
-            fontWeight: '700',
-            border: '0px solid #fff',
-
-            padding: '2px 0'
-          }
-        },
-        {
-          type: 'text',
-          value: '  ',
-          style: {
-            width: 0.25,
-            textAlign: 'right',
-            fontWeight: '700',
-            border: '0px solid #fff',
-
-            padding: '2px 0'
-          }
-        }
-      ],
-      [
-        {
-          type: 'text',
-          value: '',
           style: {
             width: 0.75,
             textAlign: 'left',
@@ -683,7 +652,7 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'left',
       fontWeight: '700',
-      fontSize: '16px'
+      fontSize: '20px'
     }
   })
 
@@ -694,7 +663,7 @@ export async function printOrderReceipt(payload: {
       style: {
         textAlign: 'left',
         fontWeight: '700',
-        fontSize: '16px'
+        fontSize: '20px'
       }
     })
   }
@@ -705,7 +674,7 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'left',
       fontWeight: '500',
-      fontSize: '16px'
+      fontSize: '20px'
     }
   })
 
@@ -738,7 +707,7 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'center',
       fontWeight: '700',
-      fontSize: '20px'
+      fontSize: '25px'
     }
   })
 
@@ -749,7 +718,7 @@ export async function printOrderReceipt(payload: {
       style: {
         textAlign: 'center',
         fontWeight: '500',
-        fontSize: '16px'
+        fontSize: '25px'
       }
     })
   }
@@ -761,7 +730,7 @@ export async function printOrderReceipt(payload: {
       style: {
         textAlign: 'center',
         fontWeight: '500',
-        fontSize: '16px'
+        fontSize: '25px'
       }
     })
 
@@ -771,7 +740,7 @@ export async function printOrderReceipt(payload: {
       style: {
         textAlign: 'center',
         fontWeight: '500',
-        fontSize: '16px'
+        fontSize: '25px'
       }
     })
   }
