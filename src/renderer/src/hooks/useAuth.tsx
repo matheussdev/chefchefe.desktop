@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useState } from 'react'
-import { setConfig, setLogin } from '../services/auth'
+import { getCache, setCache, setConfig, setLogin } from '../services/auth'
 import api from '../services/api'
 import { errorActions } from '../utils/errorActions'
 import type { LoginParams, LoginResponse, Restaurant, User } from '../types'
@@ -40,16 +40,26 @@ export function AuthProvider({ children }: Readonly<AuthProviderProps>): React.J
   }, [])
   const getRestaurant = useCallback(async (): Promise<Restaurant> => {
     return new Promise<Restaurant>((resolve, reject) => {
+      const cachedRestaurant: Restaurant | null = getCache('restaurant') as Restaurant | null
+      const cachedUser: User | null = getCache('user') as User | null
+      if (cachedUser && cachedRestaurant) {
+        setRestaurant(cachedRestaurant)
+        setUser(cachedUser)
+        resolve(cachedRestaurant)
+        return
+      }
       api
         .get('/v1/desktop/restaurant/')
         .then((response) => {
           const data: { restaurant: Restaurant; user: User } = response.data
+          setCache('restaurant', data.restaurant, 60 * 60 * 3) // cache por 3 horas
+          setCache('user', data.user, 60 * 60 * 3) // cache por 3 horas
           setRestaurant(data.restaurant)
           setUser(data.user)
           if (data.user.default_code) {
             setConfig('terminal-saved-code', data.user.default_code)
           }
-          resolve(response.data)
+          resolve(response.data.restaurant)
         })
         .catch((error) => {
           errorActions(error)

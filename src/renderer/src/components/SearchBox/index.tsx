@@ -13,6 +13,7 @@ interface SearchBoxProps {
   srtartFocus?: boolean
   onTimeSearch?: (value: string) => void
   onArrow?: (direction: 'up' | 'down') => void
+  onReload?: () => void
 }
 
 export const SearchBox: React.FC<SearchBoxProps> = ({
@@ -22,15 +23,20 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
   type = 'number',
   startF,
   srtartFocus,
-  onArrow
+  onArrow,
+  onReload
 }) => {
   const form = React.useRef<FormInstance>(null)
   useHotkeys(
     ['ctrl+r', 'meta+r', 'F5'],
     () => {
-      window.api.reloadApp()
+      if (onReload) {
+        onReload()
+      } else {
+        window.api.reloadApp()
+      }
     },
-    { enableOnContentEditable: true, keydown: false, keyup: true }
+    { enableOnContentEditable: true, keydown: false, keyup: true, enableOnFormTags: true }
   )
   useHotkeys(
     '*',
@@ -44,6 +50,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
         form.current?.getFieldInstance('search')?.focus()
         if (type === 'number' && /\D/.test(handle.key)) return
         form.current?.setFieldsValue({ search: handle.key })
+        onTimeSearch?.(handle.key)
       }
       if (handle.key === 'Escape') {
         form.current?.getFieldInstance('search')?.blur()
@@ -95,7 +102,12 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
                 onArrow?.(e.key === 'ArrowUp' ? 'up' : 'down')
               }
               if (e.key === 'r' && type === 'number') {
-                window.api.reloadApp()
+                if (onReload) {
+                  onReload()
+                  form.current?.setFieldsValue({ search: '' })
+                } else {
+                  window.api.reloadApp()
+                }
               }
             }}
             onChange={(e) => {
@@ -132,7 +144,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
         type="secondary"
         style={{ fontSize: '0.7rem', marginTop: '0.5rem', display: 'block', textAlign: 'center' }}
       >
-        (F) BUSCAR | (R) RECARREGAR |
+        (F) BUSCAR | (R) RECARREGAR
       </Text>
     </Card>
   )

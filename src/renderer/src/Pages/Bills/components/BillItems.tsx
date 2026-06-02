@@ -53,7 +53,7 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
           {
             title: 'Qtd',
             dataIndex: 'quantity',
-            width: 60,
+            width: 70,
             align: 'center',
             key: 'quantity',
             render: (value) => Number(value)
@@ -64,7 +64,8 @@ export const BillItemsTable: React.FC<BillItemsProps> = ({
             dataIndex: 'unit_price',
             key: 'unit_price',
             width: 110,
-            render: (value) => currenyFormat(Number(value))
+            render: (value, recorder) =>
+              currenyFormat(Number(value) + Number(recorder.complements_price || 0))
           },
           {
             title: 'valor',

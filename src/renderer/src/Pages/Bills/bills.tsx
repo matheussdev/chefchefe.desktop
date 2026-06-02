@@ -1,14 +1,13 @@
 import { BillCard } from '@renderer/components/BillCard'
 import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
-import { Button, Flex, Modal, Spin, Tag, Typography } from 'antd'
-import { Plus } from 'lucide-react'
+import { Flex, Result, Spin, Tag, Typography } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BillFormPage } from './form'
-import { useHotkeys } from 'react-hotkeys-hook'
 import { useCashier } from '@renderer/hooks/useCashiers'
-const { Text } = Typography
+import { Inbox } from 'lucide-react'
+const { Title } = Typography
 
 export const BillsPage: React.FC = () => {
   const { bills, fetchBills } = useBill()
@@ -18,7 +17,6 @@ export const BillsPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const { selectedCashier } = useCashier()
   const navigate = useNavigate()
-  const [openBillModal, setOpenBillModal] = useState(false)
 
   useEffect(() => {
     if (!hasUpdatedBills.current) {
@@ -31,17 +29,6 @@ export const BillsPage: React.FC = () => {
       hasUpdatedBills.current = true
     }
   }, [fetchBills])
-  useHotkeys(
-    ['n'],
-    (_, handler) => {
-      switch (handler.hotkey) {
-        case 'n':
-          setOpenBillModal(true)
-          break
-      }
-    },
-    { enableOnContentEditable: true }
-  )
 
   return (
     <Flex
@@ -56,74 +43,76 @@ export const BillsPage: React.FC = () => {
         style={{
           width: '100%'
         }}
-        gap="1rem"
+        gap="0.5rem"
       >
-        <Flex wrap="wrap" gap="0.2rem" align="center" justify="space-between">
-          <Text
-            strong
-            style={{
-              marginRight: '0.5rem'
-            }}
-          >
-            Comandas
-          </Text>
-          <Tag
-            style={{
-              borderRadius: '10px',
-              fontSize: '0.8rem',
-              cursor: 'pointer'
-            }}
-            color={statusFilter === 'open' ? 'green' : 'default'}
-            variant={statusFilter === 'open' ? 'outlined' : 'filled'}
-            onClick={() => {
-              setStatusFilter('open')
-              setLoading(true)
-              fetchBills({
-                is_open: true
-              }).finally(() => {
-                setLoading(false)
-              })
-            }}
-          >
-            Abertas{' '}
-            {statusFilter === 'open' ? `(${bills.filter((bill) => bill.is_open).length})` : ''}
-          </Tag>
-          <Tag
-            style={{
-              borderRadius: '10px',
-              fontSize: '0.8rem',
-              cursor: 'pointer'
-            }}
-            color={statusFilter === 'closed' ? 'red' : 'default'}
-            variant={statusFilter === 'closed' ? 'outlined' : 'filled'}
-            onClick={() => {
-              setStatusFilter('closed')
-              setLoading(true)
-              fetchBills({
-                is_open: false,
-                cashier_id: selectedCashier?.id
-              })
-                .catch(() => {
+        <Flex gap="0.2rem" align="center" justify="space-between">
+          <Flex align="center" gap="0.5rem">
+            <Title
+              level={4}
+              style={{
+                marginBottom: 0,
+                margin: 0
+              }}
+            >
+              Comandas
+            </Title>
+            <Tag
+              style={{
+                borderRadius: '10px',
+                fontSize: '0.8rem',
+                cursor: 'pointer'
+              }}
+              color={statusFilter === 'open' ? 'green' : 'default'}
+              variant={statusFilter === 'open' ? 'outlined' : 'filled'}
+              onClick={() => {
+                setStatusFilter('open')
+                setLoading(true)
+                fetchBills({
+                  is_open: true
+                }).finally(() => {
                   setLoading(false)
                 })
-                .finally(() => {
-                  setLoading(false)
-                })
+              }}
+            >
+              Abertas{' '}
+              {statusFilter === 'open' ? `(${bills.filter((bill) => bill.is_open).length})` : ''}
+            </Tag>
+            {selectedCashier?.id && (
+              <Tag
+                style={{
+                  borderRadius: '10px',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer'
+                }}
+                color={statusFilter === 'closed' ? 'red' : 'default'}
+                variant={statusFilter === 'closed' ? 'outlined' : 'filled'}
+                onClick={() => {
+                  setStatusFilter('closed')
+                  setLoading(true)
+                  fetchBills({
+                    is_open: false,
+                    cashier_id: selectedCashier?.id
+                  })
+                    .catch(() => {
+                      setLoading(false)
+                    })
+                    .finally(() => {
+                      setLoading(false)
+                    })
+                }}
+              >
+                Fechadas{' '}
+                {statusFilter === 'closed'
+                  ? `(${bills.filter((bill) => !bill.is_open).length})`
+                  : ''}
+              </Tag>
+            )}
+          </Flex>
+          <BillFormPage
+            onSuccess={(bill) => {
+              navigate(`/comandas/${bill.id}`)
             }}
-          >
-            Fechadas{' '}
-            {statusFilter === 'closed' ? `(${bills.filter((bill) => !bill.is_open).length})` : ''}
-          </Tag>
-          <Button
-            onClick={() => {
-              setOpenBillModal(true)
-            }}
-            style={{ marginLeft: 'auto' }}
-            icon={<Plus size={16} />}
-            type="dashed"
-          >
-            Abrir comanda (N)
-          </Button>
+          />
         </Flex>
         <Spin spinning={loading} description="Carregando comandas..." size="large">
           <div
@@ -148,6 +137,18 @@ export const BillsPage: React.FC = () => {
                   onClick={() => navigate(`/comandas/${bill.id}`)}
                 />
               ))}
+            {bills.filter(
+              (bill) => bill.number.toString().includes(searchTerm) || searchTerm === ''
+            ).length === 0 && (
+              <Result
+                style={{
+                  marginTop: '2rem',
+                  width: '100%'
+                }}
+                icon={<Inbox size={48} />}
+                title="Nenhuma comanda encontrada"
+              />
+            )}
           </div>
         </Spin>
       </Flex>
@@ -163,6 +164,15 @@ export const BillsPage: React.FC = () => {
           <SearchBox
             placeholder="Nº da comanda"
             srtartFocus
+            onReload={() => {
+              setSearchTerm('')
+              setLoading(true)
+              fetchBills({
+                is_open: true
+              }).finally(() => {
+                setLoading(false)
+              })
+            }}
             onSearch={(value) => {
               setSearchTerm(value)
               const bill = bills.find((bill) => String(bill.number) === value && bill.is_open)
@@ -180,19 +190,6 @@ export const BillsPage: React.FC = () => {
           />
         </Flex>
       )}
-      <Modal
-        open={openBillModal}
-        onCancel={() => setOpenBillModal(false)}
-        footer={null}
-        title="Abrir nova comanda"
-      >
-        <BillFormPage
-          onSuccess={(bill) => {
-            setOpenBillModal(false)
-            navigate(`/comandas/${bill.id}`)
-          }}
-        />
-      </Modal>
     </Flex>
   )
 }

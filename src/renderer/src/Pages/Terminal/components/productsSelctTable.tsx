@@ -1,6 +1,7 @@
 import { useBill } from '@renderer/hooks/useBills'
 import api from '@renderer/services/api'
 import { BillDetail, Product } from '@renderer/types'
+import { currenyFormat } from '@renderer/utils'
 import { Button, Flex, Form, message, Select, Skeleton, Space, Table, Typography } from 'antd'
 import { ChevronLeft, Save } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -177,7 +178,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
                 type="text"
                 disabled={loadingBill || loadingProducts}
                 id={`button-product-${record.id}`}
-                size="small"
+                size="large"
                 onKeyDown={(e) => {
                   // aarow down key
                   if (e.key === 'ArrowDown') {
@@ -195,20 +196,25 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
                   }
                 }}
               >
-                {value}
+                <Text style={{ fontSize: '1.5rem', fontWeight: '500' }}> {value}</Text>
               </Button>
             )
           },
           {
             title: 'Categoria',
             dataIndex: 'category',
-            key: 'category'
+            key: 'category',
+            render: (value) => <Text style={{ fontSize: '1.2rem' }}>{value || '-'}</Text>
           },
           {
             title: 'Preço',
             dataIndex: 'price',
             key: 'price',
-            render: (value) => `R$ ${value}`
+            render: (value) => (
+              <Text style={{ fontSize: '1.2rem' }}>
+                {value ? currenyFormat(Number(value)) : '-'}
+              </Text>
+            )
           }
         ]}
       />

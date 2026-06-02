@@ -152,10 +152,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, orders }) => {
             ...datasend
           })
           .then(async (response) => {
+            const printer = getConfig('default-printer') || 'caixa'
             messageApi.success('Pagamento registrado com sucesso!')
             const data = {
               type: 'close',
-              printerName: 'caixa',
+              printerName: printer,
               bill: {
                 bill_number: 'Venda Balcão - ' + response.data.sale_number,
                 table: '',

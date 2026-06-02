@@ -1,48 +1,31 @@
+import { BillCard } from '@renderer/components/BillCard'
 import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
-import { Button, Flex, Modal, Typography } from 'antd'
-import { Plus } from 'lucide-react'
+import { Flex, Spin, Typography } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BillFormPage } from '../Bills/form'
-import { BillCard } from '@renderer/components/BillCard'
-const { Text } = Typography
+import { BillFormPage } from '@renderer/Pages/Bills/form'
+const { Title } = Typography
+
 export const TerminalBillsPage: React.FC = () => {
   const { bills, fetchBills } = useBill()
   const hasUpdatedBills = useRef(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [openBillModal, setOpenBillModal] = useState(false)
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'n') {
-        setOpenBillModal(true)
-      }
-    }
-
     if (!hasUpdatedBills.current) {
+      setLoading(true)
       fetchBills({
         is_open: true
+      }).finally(() => {
+        setLoading(false)
       })
       hasUpdatedBills.current = true
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
   }, [fetchBills])
 
-  useEffect(() => {
-    const invervalBills = setInterval(() => {
-      fetchBills({
-        is_open: true
-      })
-    }, 60000)
-    return () => {
-      clearInterval(invervalBills)
-    }
-  }, [fetchBills])
   return (
     <Flex
       style={{
@@ -56,79 +39,79 @@ export const TerminalBillsPage: React.FC = () => {
         style={{
           width: '100%'
         }}
-        gap="1rem"
+        gap="0.5rem"
       >
-        <Flex wrap="wrap" gap="0.5rem" align="center" justify="space-between">
-          <Text
-            strong
-            style={{
-              marginRight: '0.5rem'
+        <Flex gap="0.2rem" align="center" justify="space-between">
+          <Flex align="center" gap="0.5rem">
+            <Title
+              level={4}
+              style={{
+                marginBottom: 0,
+                margin: 0
+              }}
+            >
+              Terminal de pedidos
+            </Title>
+          </Flex>
+          <BillFormPage
+            onSuccess={(bill) => {
+              navigate(`/terminal/${bill.id}`)
             }}
-          >
-            Terminal de pedidos ({bills.length})
-          </Text>
-          <Button
-            onClick={() => {
-              setOpenBillModal(true)
-            }}
-            icon={<Plus size={16} />}
-            type="dashed"
-          >
-            Abrir comanda (N)
-          </Button>
+          />
         </Flex>
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            flexWrap: 'wrap',
-            flexDirection: 'row',
-            gap: '0.5rem',
-            display: 'flex'
-          }}
-        >
-          {bills
-            .filter((bill) => searchTerm === '' || bill.number.toString().includes(searchTerm))
-            .map((bill, index) => (
-              <BillCard
-                key={index}
-                index={index}
-                bill={bill}
-                onClick={() => navigate(`/terminal/${bill.id}`)}
-              />
-            ))}
-        </div>
+        <Spin spinning={loading} description="Carregando comandas..." size="large">
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              maxHeight: '100%',
+              flexWrap: 'wrap',
+              flexDirection: 'row',
+              gap: '0.5rem',
+              display: 'flex',
+              minHeight: '100px'
+            }}
+          >
+            {bills
+              .filter((bill) => bill.number.toString().includes(searchTerm) || searchTerm === '')
+              .map((bill, index) => (
+                <BillCard
+                  key={index}
+                  index={index}
+                  bill={bill}
+                  onClick={() => navigate(`/terminal/${bill.id}`)}
+                />
+              ))}
+          </div>
+        </Spin>
       </Flex>
-
-      {window.innerWidth > 845 && (
+      {window.innerWidth > 645 && (
         <Flex
           vertical
           style={{
             width: '40%',
             maxWidth: '300px',
-            minWidth: '270px'
+            minWidth: '300px'
           }}
         >
           <SearchBox
             placeholder="Nº da comanda"
             srtartFocus
-            onArrow={() => {
-              const buttonElement = document.getElementById(`bill-card-0`)
-              buttonElement?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest'
+            onReload={() => {
+              setSearchTerm('')
+              setLoading(true)
+              fetchBills({
+                is_open: true
+              }).finally(() => {
+                setLoading(false)
               })
-              buttonElement?.focus()
             }}
             onSearch={(value) => {
-              setSearchTerm(value.trim())
-              if (value.trim() === '') return
+              setSearchTerm(value)
               const bill = bills.find((bill) => String(bill.number) === value && bill.is_open)
               if (bill) {
                 navigate(`/terminal/${bill.id}`)
-              } else if (
-                bills.find((bill) => String(bill.number).includes(value) && bill.is_open)
-              ) {
+              } else {
                 const buttonElement = document.getElementById(`bill-card-0`)
                 buttonElement?.scrollIntoView({
                   behavior: 'smooth',
@@ -140,19 +123,6 @@ export const TerminalBillsPage: React.FC = () => {
           />
         </Flex>
       )}
-      <Modal
-        open={openBillModal}
-        onCancel={() => setOpenBillModal(false)}
-        footer={null}
-        title="Abrir nova comanda"
-      >
-        <BillFormPage
-          onSuccess={(bill) => {
-            setOpenBillModal(false)
-            navigate(`/terminal/${bill.id}`)
-          }}
-        />
-      </Modal>
     </Flex>
   )
 }

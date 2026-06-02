@@ -5,16 +5,14 @@ import {
   Drawer,
   Flex,
   Form,
-  FormInstance,
   Input,
   message,
   Modal,
   Select,
   Tabs,
-  Tag,
   Typography
 } from 'antd'
-import { ChevronLeft, FileDigit, Receipt } from 'lucide-react'
+import { ChevronLeft, FileDigit, MonitorUpIcon, Receipt } from 'lucide-react'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BillResum } from './components/BillResum'
@@ -26,6 +24,8 @@ import api from '@renderer/services/api'
 import { errorActions } from '@renderer/utils'
 import { printCloseCommand } from '@renderer/utils/Printers'
 import { useCashier } from '@renderer/hooks/useCashiers'
+import { getConfig } from '@renderer/services/auth'
+import { BillNF } from './components/BillNF'
 const { Text } = Typography
 export const BillDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -40,7 +40,7 @@ export const BillDetailPage: React.FC = () => {
   const [cancelModalOpen, setCancelModalOpen] = React.useState(false)
   const [cancelError, setCancelError] = React.useState<string | null>(null)
   const [loadingCancel, setLoadingCancel] = React.useState(false)
-  const cancelForm = useRef<FormInstance | null>(null)
+  const [cancelForm] = Form.useForm()
   const [loadingOrders, setLoadingOrders] = React.useState(false)
   const [orders, setOrders] = React.useState<Order[]>([])
   const { selectedCashier } = useCashier()
@@ -66,16 +66,18 @@ export const BillDetailPage: React.FC = () => {
         .then((data) => {
           fetchOrders(id)
           setBill(data)
-          fetchBills(
-            {
-              is_open: true,
-              free_group: true,
-              current_group: data?.bill_groups ? data.bill_groups[0] : undefined
-            },
-            false
-          ).then((datar) => {
-            setBillsToGroup(datar as Bill[])
-          })
+          if (data.is_open) {
+            fetchBills(
+              {
+                is_open: true,
+                free_group: true,
+                current_group: data?.bill_groups ? data.bill_groups[0] : undefined
+              },
+              false
+            ).then((datar) => {
+              setBillsToGroup(datar as Bill[])
+            })
+          }
         })
         .finally(() => {
           setLoadingBill(false)
@@ -98,15 +100,12 @@ export const BillDetailPage: React.FC = () => {
       case 'u':
         setUnifyDrawerOpen(true)
         break
-      case 'n':
-        alert('NF!')
-        break
       case 'f':
         if (bill?.is_open) navigate(`/terminal/${id}/`)
         break
     }
   })
-
+  const [nfDrawerOpen, setNfDrawerOpen] = React.useState(false)
   return (
     <Flex
       style={{
@@ -137,41 +136,55 @@ export const BillDetailPage: React.FC = () => {
 
           <Flex wrap="wrap" gap="0.2rem" style={{ display: 'inline-flex' }} align="center">
             <Text
-              strong
               style={{
                 marginRight: '0.5rem',
-                fontSize: '1.2rem'
+                fontSize: '1.2rem',
+                fontWeight: 700
               }}
             >
-              Comandas:
+              Comandas:{' '}
+              {bill?.bill_group
+                ? bill?.bill_group
+                    ?.map((group) => group.number.toString().padStart(3, '0'))
+                    .join(', ')
+                : bill?.number || bill?.identification || bill?.table_number || 'N/A'}
             </Text>
-            {bill?.bill_group
-              ? bill?.bill_group?.map((group) => (
-                  <Tag key={group.id} color="blue" variant="outlined">
-                    {group.number.toString().padStart(3, '0')}
-                  </Tag>
-                ))
-              : bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Flex>
-          <Button
-            style={{ marginLeft: 'auto' }}
-            icon={<FileDigit size={16} />}
-            onClick={() => {
-              setUnifyDrawerOpen(true)
-            }}
-            type="dashed"
-          >
-            Unificar (U)
-          </Button>
-          <Button
-            icon={<Receipt size={16} />}
-            onClick={() => {
-              alert('Visualizar')
-            }}
-            type="dashed"
-          >
-            NF (N)
-          </Button>
+          {bill?.is_open && (
+            <>
+              <Button
+                style={{ marginLeft: 'auto' }}
+                icon={<FileDigit size={16} />}
+                onClick={() => {
+                  setUnifyDrawerOpen(true)
+                }}
+                type="dashed"
+              >
+                Unificar (U)
+              </Button>
+              <Button
+                icon={<MonitorUpIcon size={16} />}
+                onClick={() => {
+                  navigate(`/terminal/${id}/`)
+                }}
+                type="dashed"
+              >
+                Lançar pedido (F)
+              </Button>
+            </>
+          )}
+          {!bill?.is_open && (
+            <Button
+              icon={<Receipt size={16} />}
+              onClick={() => {
+                setNfDrawerOpen(true)
+              }}
+              style={{ marginLeft: 'auto' }}
+              type="dashed"
+            >
+              Emitir NF
+            </Button>
+          )}
         </Flex>
         <Card
           styles={{
@@ -214,13 +227,13 @@ export const BillDetailPage: React.FC = () => {
           />
         </Card>
       </Flex>
-      {window.innerWidth > 845 && (
+      {window.innerWidth > 645 && (
         <Flex
           vertical
           style={{
             width: '40%',
             maxWidth: '500px',
-            minWidth: '270px'
+            minWidth: '340px'
           }}
           gap={'1rem'}
         >
@@ -229,6 +242,7 @@ export const BillDetailPage: React.FC = () => {
             <BillPriceResum
               orders={orders.flatMap((order) => {
                 return {
+                  product_id: order.product,
                   quantity: Number(order.quantity),
                   name: order.product_name,
                   price: Number(order.total_price)
@@ -240,8 +254,14 @@ export const BillDetailPage: React.FC = () => {
             />
           )}
           {bill?.is_open && (
-            <Button type="dashed" block danger onClick={() => setCancelModalOpen(true)}>
-              Fechar comanda
+            <Button
+              type="dashed"
+              block
+              danger
+              onClick={() => setCancelModalOpen(true)}
+              size="large"
+            >
+              Encerrar comanda
             </Button>
           )}
         </Flex>
@@ -311,6 +331,11 @@ export const BillDetailPage: React.FC = () => {
         onCancel={() => !loadingCancel && setCancelModalOpen(false)}
         title="Fechar comanda"
         destroyOnHidden
+        afterOpenChange={(open) => {
+          if (open) {
+            cancelForm.getFieldInstance('close_message')?.focus()
+          }
+        }}
         footer={
           <Flex gap="0.5rem" justify="space-between">
             <Button
@@ -325,7 +350,7 @@ export const BillDetailPage: React.FC = () => {
             <Button
               type="primary"
               danger
-              onClick={() => cancelForm.current?.submit()}
+              onClick={() => cancelForm?.submit()}
               loading={loadingCancel}
             >
               Sim, fechar comanda
@@ -333,11 +358,11 @@ export const BillDetailPage: React.FC = () => {
           </Flex>
         }
       >
-        <Text>Tem certeza que deseja fechar esta comanda?</Text>
+        <Text>Tem certeza que deseja encerrar esta comanda sem receber pagamentos?</Text>
         <Form
           layout="vertical"
           style={{ marginTop: '1rem' }}
-          ref={cancelForm}
+          form={cancelForm}
           onFinish={(values) => {
             setCancelError(null)
             setLoadingCancel(true)
@@ -350,8 +375,9 @@ export const BillDetailPage: React.FC = () => {
               })
               .then(async (res) => {
                 messageApi.success('Comanda fechada com sucesso!')
+                const printer = getConfig('default-printer') || 'caixa'
                 const data = {
-                  printerName: 'caixa',
+                  printerName: printer,
                   bill: {
                     bill_number: bill?.number.toString() || '',
                     table: bill?.table_number ? `Mesa ${bill.table_number}` : 'Sem mesa',
@@ -366,7 +392,15 @@ export const BillDetailPage: React.FC = () => {
                   motivo: values.close_message || '',
                   employee: res?.data?.close_detail?.closed_by_name || ''
                 }
+                messageApi.loading({
+                  content: 'Imprimindo comprovante de fechamento...',
+                  key: 'print'
+                })
                 await printCloseCommand(data)
+                messageApi.success({
+                  content: 'Comprovante impresso com sucesso!',
+                  key: 'print'
+                })
                 navigate('/comandas')
               })
               .catch((error) => {
@@ -378,7 +412,12 @@ export const BillDetailPage: React.FC = () => {
               })
           }}
         >
-          <Form.Item name="close_message" label="Motivo do fechamento">
+          <Form.Item
+            name="close_message"
+            label="Motivo do fechamento"
+            required
+            rules={[{ required: true, message: 'Informe o motivo do fechamento' }]}
+          >
             <Input.TextArea placeholder="Motivo do fechamento" size="large" />
           </Form.Item>
           <Form.Item
@@ -396,6 +435,37 @@ export const BillDetailPage: React.FC = () => {
           </Text>
         )}
       </Modal>
+      {bill?.sale && (
+        <Drawer
+          title={'Emitir Nota Fiscal'}
+          size={900}
+          onClose={() => setNfDrawerOpen(false)}
+          open={nfDrawerOpen}
+          destroyOnHidden
+        >
+          <BillNF
+            sale_id={bill.sale}
+            bills={
+              bill?.bill_group?.map((group) => group.number).join(',') ||
+              bill?.number.toString() ||
+              ''
+            }
+            total_paid={90}
+            orders={orders.flatMap((order) => {
+              return {
+                product_id: order.product,
+                quantity: Number(order.quantity),
+                name: order.product_name,
+                price: Number(order.unit_price) + Number(order.complements_price),
+                paid_value: Number(order.total_price)
+              }
+            })}
+            onSuccess={() => {
+              setNfDrawerOpen(false)
+            }}
+          />
+        </Drawer>
+      )}
     </Flex>
   )
 }

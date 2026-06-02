@@ -8,6 +8,7 @@ import {
   Form,
   Input,
   message,
+  Popconfirm,
   Select,
   Space,
   Switch,
@@ -85,6 +86,16 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
         >
           Atualizar Mesas
         </Button>
+        <Button
+          type="dashed"
+          icon={<RefreshCw size={16} />}
+          onClick={() => {
+            clearCache('restaurant')
+            window.api.reloadApp()
+          }}
+        >
+          Atualizar Restaurante e Usuário
+        </Button>
       </Flex>
       {contextHolder}
       <Form
@@ -102,7 +113,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
           if (values.printTimeout) {
             setConfig('print-timeout', values.printTimeout)
           } else {
-            setConfig('print-timeout', '5')
+            setConfig('print-timeout', '10')
           }
           if (values.idPc) {
             setConfig('id-pc', values.idPc)
@@ -134,13 +145,18 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
           } else {
             setConfig('terminal-scale-bound-rate', '9600')
           }
+          if (values.defaultPrinter) {
+            setConfig('default-printer', values.defaultPrinter)
+          } else {
+            setConfig('default-printer', '')
+          }
           messageApi.success('Configurações salvas com sucesso!')
           window.api.reloadApp()
         }}
       >
         <Text>Acesso</Text>
         <Space.Compact size="large" style={{ display: 'flex', marginBottom: '1rem' }}>
-          <Form.Item label="HTTP" name="http" initialValue={getConfig('http') || 'http'} noStyle>
+          <Form.Item label="HTTP" name="http" initialValue={getConfig('http') || 'https'} noStyle>
             <Select
               size="large"
               placeholder="HTTP"
@@ -207,7 +223,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
           <Form.Item
             label="Tempo de impressão (segundos)"
             name="printTimeout"
-            initialValue={getConfig('print-timeout') || '5'}
+            initialValue={getConfig('print-timeout') || '10'}
           >
             <Input size="large" placeholder="Tempo de impressão" type="number" />
           </Form.Item>
@@ -219,6 +235,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
           initialValue={getConfig('terminal-scale-port')}
         >
           <Select
+            allowClear
             size="large"
             onChange={() => {
               setScaleConnected(false)
@@ -257,6 +274,35 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ isOpen, onClose }) => 
             }
           />
         )}
+        <Form.Item
+          label="Impressora padrão"
+          name="defaultPrinter"
+          initialValue={getConfig('default-printer') || 'caixa'}
+        >
+          <Input size="large" placeholder="Nome da impressora padrão" />
+        </Form.Item>
+        <Form.Item>
+          <Popconfirm
+            title="Resetar Configurações"
+            placement="left"
+            description={
+              <Text>
+                Tem certeza que deseja resetar as configurações?
+                <br />
+                Isso irá limpar as configurações salvas e recarregar o aplicativo.
+              </Text>
+            }
+            onConfirm={() => {
+              localStorage.clear()
+              messageApi.success('Configurações resetadas com sucesso!')
+              window.api.reloadApp()
+            }}
+            okText="Sim"
+            cancelText="Não"
+          >
+            <Button>Resetar Configurações</Button>
+          </Popconfirm>
+        </Form.Item>
         <Form.Item>
           <Button block type="primary" size="large" htmlType="submit" icon={<Save size={16} />}>
             Salvar

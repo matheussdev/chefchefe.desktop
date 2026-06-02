@@ -33,21 +33,21 @@ const pages = [
   {
     title: 'Caixa',
     description: 'Gerencie o caixa do seu estabelecimento',
-    icon: <BanknoteArrowDown size={54} />,
+    icon: <BanknoteArrowDown size={54} color={'#46AA54'} />,
     path: '/caixa',
     permission: 'CAIXA'
   },
   {
     title: 'Comandas',
     description: 'Gerencie as comandas do seu estabelecimento',
-    icon: <FileDigit size={54} />,
+    icon: <FileDigit size={54} color={'#46AA54'} />,
     path: '/comandas',
     permission: 'COMANDAS'
   },
   {
     title: 'Terminal de pedidos',
     description: 'Gerencie o terminal de pedidos do seu estabelecimento',
-    icon: <MonitorUp size={54} />,
+    icon: <MonitorUp size={54} color={'#46AA54'} />,
     path: '/terminal',
     permission: 'TERMINAL'
   },
@@ -55,14 +55,14 @@ const pages = [
   {
     title: 'Vendas Balcão',
     description: 'Gerencie as vendas do seu estabelecimento',
-    icon: <ShoppingBasket size={54} />,
+    icon: <ShoppingBasket size={54} color={'#46AA54'} />,
     path: '/balcao',
     permission: 'BALCAO'
   },
   {
     title: 'Mesas',
     description: 'Gerencie as mesas do seu estabelecimento',
-    icon: <Armchair size={54} />,
+    icon: <Armchair size={54} color={'#46AA54'} />,
     path: '/mesas',
     permission: 'MESAS'
   }

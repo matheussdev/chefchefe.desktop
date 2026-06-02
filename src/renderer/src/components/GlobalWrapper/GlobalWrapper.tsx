@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import * as S from './styles'
-import { Button, Dropdown, Flex, Tooltip, Typography } from 'antd'
+import { Avatar, Button, Dropdown, Flex, Tag, theme, Tooltip, Typography } from 'antd'
 import {
   Armchair,
   BanknoteArrowDown,
@@ -9,9 +9,12 @@ import {
   Home,
   LogOut,
   MonitorUp,
+  PrinterCheck,
   RefreshCcw,
   Settings,
-  ShoppingBasket
+  ShoppingBasket,
+  Store,
+  User
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@renderer/hooks/useAuth'
@@ -20,8 +23,7 @@ interface GlobalWrapperProps {
   children: React.ReactNode
 }
 import jsonPackage from '../../../../../package.json'
-import { useHotkeys } from 'react-hotkeys-hook'
-import { logout } from '@renderer/services/auth'
+import { getConfig, logout } from '@renderer/services/auth'
 import { ConfigModal } from '../ConfigModal'
 const { Text, Title } = Typography
 const menu = [
@@ -97,21 +99,12 @@ const Menu = (): React.JSX.Element => {
 export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
   children
 }: GlobalWrapperProps): React.JSX.Element => {
-  const { restaurant } = useAuth()
+  const { restaurant, user } = useAuth()
   const { selectedCashier } = useCashier()
   const version = jsonPackage.version
-  useHotkeys(['t', 'c'], (_, handler) => {
-    switch (handler.hotkey) {
-      case 't':
-        // navigate('/terminal')
-        break
-      case 'c':
-        // navigate('/comandas')
-        break
-    }
-  })
   const [openConfig, setOpenConfig] = useState(false)
   const navigate = useNavigate()
+  const token = theme.useToken().token
   return (
     <S.Containter>
       <ConfigModal isOpen={openConfig} onClose={() => setOpenConfig(false)} />
@@ -122,23 +115,28 @@ export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
             <Flex align="center" gap="0.5rem">
               <Dropdown
                 trigger={['click']}
+                styles={{
+                  item: {
+                    fontSize: '1.3rem'
+                  }
+                }}
                 menu={{
                   items: [
                     {
-                      icon: <Home size={16} />,
+                      icon: <Home size={24} />,
                       key: 'home',
                       label: 'Início',
                       onClick: () => navigate('/')
                     },
                     {
-                      icon: <Settings size={16} />,
+                      icon: <Settings size={24} />,
                       key: 'Configurações',
                       label: 'Configurações',
                       onClick: () => setOpenConfig(true)
                     },
 
                     {
-                      icon: <LogOut size={16} />,
+                      icon: <LogOut size={24} />,
                       key: 'logout',
                       label: 'Sair',
                       onClick: () => logout()
@@ -161,22 +159,74 @@ export const GlobalWrapper: React.FC<GlobalWrapperProps> = ({
                   Versão {version}
                 </Text>
               </Flex>
-            </Flex>
-            <Flex align="center" gap="0.2rem" vertical>
-              <Title
-                level={5}
-                style={{
-                  margin: 0,
-                  marginBottom: '-0.5rem'
-                }}
-              >
-                {restaurant?.name || 'ChefChefe'}
-              </Title>
-              <Text>
-                {selectedCashier
-                  ? `Caixa: ${selectedCashier.identification}`
-                  : 'Nenhum caixa aberto'}
-              </Text>
+              {getConfig('print-server-enabled') === 'true' && (
+                <Tooltip title="Servidor de impressão ativo" destroyOnHidden>
+                  <Tag
+                    style={{ paddingTop: '4px' }}
+                    icon={<PrinterCheck size={16} color="green" />}
+                    color="green"
+                    variant="outlined"
+                  ></Tag>
+                </Tooltip>
+              )}
+              <Flex align="center" gap="0.5rem" style={{ marginLeft: '0.4rem' }}>
+                <Avatar
+                  size={34}
+                  shape="square"
+                  style={{ backgroundColor: token.colorPrimary }}
+                  icon={<Store size={22} color="#fff" />}
+                >
+                  {restaurant?.name[0] || 'U'}
+                </Avatar>
+                <Flex vertical>
+                  <Title
+                    level={5}
+                    style={{
+                      margin: 0,
+                      marginBottom: '0px',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    {restaurant?.name || 'ChefChefe'}
+                  </Title>
+                  <Text
+                    type="secondary"
+                    style={{ margin: 0, fontSize: '0.8rem', lineHeight: '0.8rem' }}
+                  >
+                    {selectedCashier
+                      ? `Caixa: ${selectedCashier.identification}`
+                      : 'Nenhum caixa aberto'}
+                  </Text>
+                </Flex>
+              </Flex>
+              <Flex align="center" gap="0.5rem" style={{ marginLeft: '0.4rem' }}>
+                <Avatar
+                  size={34}
+                  shape="square"
+                  style={{ backgroundColor: token.colorPrimary }}
+                  icon={<User size={22} color="#fff" />}
+                >
+                  {user?.name[0] || 'U'}
+                </Avatar>
+                <Flex vertical>
+                  <Title
+                    level={5}
+                    style={{
+                      margin: 0,
+                      marginBottom: '0px',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    {user?.name || 'ChefChefe'}
+                  </Title>
+                  <Text
+                    type="secondary"
+                    style={{ margin: 0, fontSize: '0.8rem', lineHeight: '0.8rem' }}
+                  >
+                    {'Usuário'}
+                  </Text>
+                </Flex>
+              </Flex>
             </Flex>
             <Menu />
           </Flex>
