@@ -14,9 +14,7 @@ type PrintPayload = {
   lines: ReceiptLine[]
 }
 
-export async function printThermalReceipt(
-  payload: PrintPayload
-) {
+export async function printThermalReceipt(payload: PrintPayload) {
   const data = payload.lines.map((line) => ({
     ...line,
 
@@ -34,8 +32,8 @@ export async function printThermalReceipt(
     silent: true,
 
     margins: {
-		  marginType: "none"
-	  },
+      marginType: 'none'
+    },
 
     copies: 1,
 

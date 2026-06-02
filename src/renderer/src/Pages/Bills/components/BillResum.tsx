@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, Flex, Tag, Typography } from 'antd'
-import { Clock, FileDigit, HandPlatter, IdCard, Utensils } from 'lucide-react'
+import { Clock, HandPlatter, IdCard, Utensils } from 'lucide-react'
 import { BillDetail } from '@renderer/types'
 import dayjs from 'dayjs'
 const { Text } = Typography
@@ -48,17 +48,12 @@ export const BillResum: React.FC<BillResumProps> = ({ bill, loading }) => {
       }}
     >
       <Flex gap="0.5rem" align="center">
-        <FileDigit size={20} />
-        <Text strong>Comanda:</Text>
-        <Text>{bill?.number}</Text>
-        <Tag color={bill?.is_open ? 'green' : 'red'} variant="outlined">
-          {bill?.is_open ? 'Aberta' : 'Fechada'}
-        </Tag>
-      </Flex>
-      <Flex gap="0.5rem" align="center">
         <Clock size={17} />
         <Text strong>Permanência:</Text>
         <Text>{fromNow(bill?.opened_at, bill?.closed_at)}</Text>
+        <Tag color={bill?.is_open ? 'green' : 'red'} variant="outlined">
+          {bill?.is_open ? 'Aberta' : 'Fechada'}
+        </Tag>
       </Flex>
       {bill?.identification && (
         <Flex gap="0.5rem" align="center">
@@ -67,7 +62,7 @@ export const BillResum: React.FC<BillResumProps> = ({ bill, loading }) => {
           <Text>{bill?.identification}</Text>
         </Flex>
       )}
-      {bill?.table_number !== null && (
+      {bill?.table_number && (
         <Flex gap="0.5rem" align="center">
           <Utensils size={20} />
           <Text strong>Mesa:</Text>

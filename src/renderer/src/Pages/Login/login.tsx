@@ -81,7 +81,7 @@ export const LoginPage: React.FC = () => {
             window.api.reloadApp()
           }}
         >
-          <Form.Item label="HTTP" name="http" initialValue={getConfig('http') || 'http'}>
+          <Form.Item label="HTTP" name="http" initialValue={getConfig('http') || 'https'}>
             <Select
               size="large"
               placeholder="HTTP"

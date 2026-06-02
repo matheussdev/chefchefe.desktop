@@ -10,14 +10,16 @@ import { useCashier } from '@renderer/hooks/useCashiers'
 import api from '@renderer/services/api'
 import { printOrderReceipt } from '@renderer/utils/Printers'
 import { getConfig } from '@renderer/services/auth'
+import { GlobalWrapper } from '@renderer/components/GlobalWrapper'
 import dayjs from 'dayjs'
 
 interface MiddlewareProps {
   children: React.ReactNode
+  wrapper?: boolean
 }
 
 const Middleware = (props: MiddlewareProps): React.JSX.Element => {
-  const { children } = props
+  const { children, wrapper = false } = props
   const [loading, setLoading] = useState(true)
   const { getRestaurant } = useAuth()
   const { fetchCashiers } = useCashier()
@@ -48,7 +50,7 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
     api
       .get('v1/desktop/operation/print-jobs/list/', {
         params: {
-          time: dayjs().format('HH-mm-ss'),
+          time: dayjs().format('HH[h]mm[m]ss[s]'),
           id_pc: idPc || undefined
         }
       })
@@ -70,7 +72,7 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
 
   useEffect(() => {
     const severEnabled = getConfig('print-server-enabled') === 'true'
-    const printTimeout = parseInt(getConfig('print-timeout') || '5', 10) * 1000
+    const printTimeout = parseInt(getConfig('print-timeout') || '10', 10) * 1000
     if (severEnabled) {
       const interval = setInterval(() => {
         fetchToPrint()
@@ -81,7 +83,13 @@ const Middleware = (props: MiddlewareProps): React.JSX.Element => {
     return () => {}
   }, [fetchToPrint])
 
-  return (
+  return wrapper ? (
+    <GlobalWrapper>
+      <Spin spinning={loading} size="large">
+        {children}
+      </Spin>
+    </GlobalWrapper>
+  ) : (
     <Spin spinning={loading} size="large">
       {children}
     </Spin>
@@ -99,8 +107,8 @@ export const Navigation = (): React.JSX.Element => {
                 key={route.path}
                 path={route.path}
                 element={
-                  <Middleware>
-                    <PrivateRoute wrapper={route.showSidebar} />
+                  <Middleware wrapper={route.showSidebar}>
+                    <PrivateRoute />
                   </Middleware>
                 }
               >
@@ -113,7 +121,7 @@ export const Navigation = (): React.JSX.Element => {
         <Route path="/login" element={<LoginRoute />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
-        <Route path="*" element={<Link to="/caixa">not found</Link>} />
+        <Route path="*" element={<Link to="/">not found</Link>} />
       </Routes>
     </HashRouter>
   )

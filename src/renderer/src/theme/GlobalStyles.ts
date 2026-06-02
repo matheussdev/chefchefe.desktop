@@ -69,5 +69,21 @@ html {
 .ant-form-item{
   margin-bottom: 1rem;
 }
+
+.custom-input-number .ant-input-number-input {
+    font-size: 24px !important;
+    height: 48px;
+    font-weight: 500 !important;
+}
+.custom-input {
+    font-size: 24px !important;
+    height: 48px !important;
+    font-weight: 500 !important;
+}
+.custom-input .ant-input {
+    font-size: 24px !important;
+    font-weight: 500 !important;
+}
+
 `
 export default GlobalStyle

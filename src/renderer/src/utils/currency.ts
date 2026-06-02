@@ -10,8 +10,6 @@ export const parseCurrency = (value: string): number => {
   return isNaN(parsed) ? 0 : parsed
 }
 
-
-
 export function formatToBRL(value: string): string {
   // Limpa os caracteres que não são números
   const onlyNumbers = value?.replace(/\D+/g, '')
@@ -25,8 +23,11 @@ export function formatToBRL(value: string): string {
   // Usa o objeto Intl para formatar para a moeda brasileira
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'BRL',
-  }).format(floatNumber).replace('R$', '').trim()
+    currency: 'BRL'
+  })
+    .format(floatNumber)
+    .replace('R$', '')
+    .trim()
 }
 
 export function formatToKilos(value: string): string {
@@ -42,9 +43,11 @@ export function formatToKilos(value: string): string {
     currency: 'BRL',
     minimumFractionDigits: 3,
     maximumFractionDigits: 3
-  }).format(floatNumber).replace('R$', '').trim()
+  })
+    .format(floatNumber)
+    .replace('R$', '')
+    .trim()
 }
-
 
 export function brlToNumber(value: string): number {
   // Remove o prefixo R$, espaços e outros caracteres não-numéricos, e substitui vírgula por ponto

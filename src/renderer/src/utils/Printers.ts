@@ -92,7 +92,7 @@ type ReceiptLine = {
       fontWeight?: string
       textAlign?: 'left' | 'center' | 'right'
       fontSize?: string
-      padding?: string | number,
+      padding?: string | number
       paddingRight?: string | number
     }
   }[][]
@@ -251,7 +251,7 @@ export async function printBillReceipt(payload: {
         value: 'ITEM',
         style: {
           width: 0.75,
-          fontWeight: '700',
+          fontWeight: '700'
         }
       },
 
@@ -337,7 +337,7 @@ export async function printBillReceipt(payload: {
             fontWeight: '700',
             border: '0px solid #fff',
 
-            padding: '2px 0',
+            padding: '2px 0'
           }
         },
         {
@@ -351,7 +351,7 @@ export async function printBillReceipt(payload: {
 
             padding: '2px 0',
             paddingRight: '10px'
-          },
+          }
         }
       ],
       [
@@ -364,7 +364,7 @@ export async function printBillReceipt(payload: {
             fontWeight: '700',
             border: '0px solid #fff',
 
-            padding: '2px 0',
+            padding: '2px 0'
           }
         },
         {
@@ -658,6 +658,7 @@ export async function printOrderReceipt(payload: {
     product_name: string
     notes?: string
     date: string
+    complements?: string[]
   }
   type: 'first' | 'reprint'
 }) {
@@ -740,6 +741,18 @@ export async function printOrderReceipt(payload: {
       fontSize: '20px'
     }
   })
+
+  for (const complement of order.complements || []) {
+    lines.push({
+      type: 'text',
+      value: `${complement}`,
+      style: {
+        textAlign: 'center',
+        fontWeight: '500',
+        fontSize: '16px'
+      }
+    })
+  }
 
   if (order.notes) {
     lines.push({

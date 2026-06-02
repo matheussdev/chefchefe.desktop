@@ -47,22 +47,41 @@ const NumberInput: React.FC<{
   value: number
   onChange: (value: number | null) => void
   max?: boolean
-}> = ({ value, onChange, max }) => {
+  id: string
+  index?: number
+}> = ({ value, onChange, max, id, index }) => {
   return (
     <Flex align="center" gap="0.5rem">
       <Button
         icon={<Minus size={22} />}
         size="large"
         onClick={() => value > 0 && onChange(value - 1)}
-        disabled={max && value === 0}
+        disabled={value === 0}
+        style={{ height: '48px', width: '48px' }}
+        id={`minus-${id}-${index}`}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            const plusButton = document.getElementById(`plus-${id}-${index ? index + 1 : 0}`)
+            plusButton?.focus()
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            const plusButton = document.getElementById(`plus-${id}-${index ? index - 1 : 0}`)
+            plusButton?.focus()
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault()
+            const plusButton = document.getElementById(`plus-${id}-${index ? index + 1 : 0}`)
+            plusButton?.focus()
+          }
+        }}
       />
       <InputNumber
         size="large"
         mode="spinner"
         style={{
-          width: 60,
-          height: 40
+          width: 60
         }}
+        className="custom-input-number"
         onChange={onChange}
         value={value}
         defaultValue={0}
@@ -74,7 +93,25 @@ const NumberInput: React.FC<{
         disabled={max}
         icon={<Plus size={22} />}
         size="large"
+        style={{ height: '48px', width: '48px' }}
         onClick={() => !max && onChange(value + 1)}
+        id={`plus-${id}-${index}`}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            const plusButton = document.getElementById(`plus-${id}-${index ? index + 1 : 0}`)
+            alert(`plus-${id}-${index ? index + 1 : 0}`)
+            plusButton?.focus()
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            const plusButton = document.getElementById(`plus-${id}-${index ? index - 1 : 0}`)
+            plusButton?.focus()
+          } else if (e.key === 'ArrowLeft') {
+            e.preventDefault()
+            const minusButton = document.getElementById(`minus-${id}-${index ? index - 1 : 0}`)
+            minusButton?.focus()
+          }
+        }}
       />
     </Flex>
   )
@@ -107,7 +144,6 @@ export const OrderModal: React.FC<OrderModalProps> = ({
     (values: ProductToAdd) => {
       if (loadingAdd) return
       setLoadingAdd(true)
-      console.log('values', values)
       api
         .post('v1/desktop/operation/orders/', {
           ...values,
@@ -121,6 +157,21 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             }))
         })
         .then((response) => {
+          const complements = response?.data?.complements_details || []
+          let complementsLine: string[] = []
+          if (Array.isArray(complements)) {
+            complementsLine = complements.map(
+              (c: {
+                complement_group_name: string
+                complements: { quantity: number; name: string }[]
+              }) =>
+                `${c.complement_group_name}: ${c.complements
+                  .map(
+                    (comp: { quantity: number; name: string }) => `${comp.quantity} ${comp.name}`
+                  )
+                  .join(', ')}`
+            )
+          }
           const data = {
             printerName: response.data?.printer_name,
             order: {
@@ -132,7 +183,8 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               quantity: response?.data?.quantity,
               product_name: response?.data?.product_name,
               notes: response?.data?.notes,
-              date: dayjs(response?.data?.created).format('DD/MM/YYYY HH:mm:ss')
+              date: dayjs(response?.data?.created).format('DD/MM/YYYY HH:mm:ss'),
+              complements: complementsLine
             },
             type: 'first' as 'first' | 'reprint'
           }
@@ -175,6 +227,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
       open={!!selectedProduct}
       onCancel={onClose}
       closeIcon={false}
+      centered
       title={selectedProduct?.name}
       destroyOnHidden
       footer={
@@ -207,81 +260,87 @@ export const OrderModal: React.FC<OrderModalProps> = ({
       <Form form={form} layout="vertical" onFinish={onFinish}>
         <Form.Item name="product" initialValue={selectedProduct?.id} hidden></Form.Item>
         <Form.Item name="bill" initialValue={billId} hidden></Form.Item>
-        {selectedProduct?.complement_groups.map((group) => (
-          <Flex vertical key={group.id} gap="0.5rem" style={{ marginBottom: '1rem' }}>
-            <Text strong>{group.name}</Text>
-            <Table
-              size="small"
-              pagination={false}
-              showHeader={false}
-              bordered={true}
-              rowKey={(record) => record.id}
-              columns={[
-                {
-                  title: 'Complemento',
-                  dataIndex: 'name',
-                  key: 'name',
-                  render: (value, record) => (
-                    <Text>
-                      {value} - {`${currenyFormat(Number(record.price))}`}
-                    </Text>
-                  )
-                },
-                {
-                  title: 'Quantidade',
-                  dataIndex: 'id',
-                  key: 'id',
-                  width: 150,
-                  render: (_, item) => (
-                    <NumberInput
-                      max={
-                        complementsToAdd.find((c) => c.complement === item.id)?.quantity ===
-                          item.max ||
-                        group.max -
-                          (complementsToAdd
-                            .filter((c) => c.group === group.id)
-                            .reduce((acc, c) => acc + c.quantity, 0) || 0) <=
-                          0
-                      }
-                      value={complementsToAdd.find((c) => c.complement === item.id)?.quantity || 0}
-                      onChange={(value) => {
-                        setComplementsToAdd((prev) => {
-                          const index = prev.findIndex((c) => c.complement === item.id)
-                          if (index === -1) {
-                            return [
-                              ...prev,
-                              {
-                                complement: item.id,
-                                group: group.id,
-                                quantity: value ?? 0,
-                                group_name: group.name,
-                                complement_name: item.name
+        <Flex vertical style={{ maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }} gap="1rem">
+          {selectedProduct?.complement_groups.map((group) => (
+            <Flex vertical key={group.id} gap="0.5rem" style={{ marginBottom: '1rem' }}>
+              <Text strong>{group.name}</Text>
+              <Table
+                size="small"
+                pagination={false}
+                showHeader={false}
+                bordered={true}
+                rowKey={(record) => record.id}
+                columns={[
+                  {
+                    title: 'Complemento',
+                    dataIndex: 'name',
+                    key: 'name',
+                    render: (value, record) => (
+                      <Text>
+                        {value} - {`${currenyFormat(Number(record.price))}`}
+                      </Text>
+                    )
+                  },
+                  {
+                    title: 'Quantidade',
+                    dataIndex: 'id',
+                    key: 'id',
+                    width: 150,
+                    render: (_, item, ind) => (
+                      <NumberInput
+                        id={'plus-min'}
+                        index={ind + 1}
+                        max={
+                          complementsToAdd.find((c) => c.complement === item.id)?.quantity ===
+                            item.max ||
+                          group.max -
+                            (complementsToAdd
+                              .filter((c) => c.group === group.id)
+                              .reduce((acc, c) => acc + c.quantity, 0) || 0) <=
+                            0
+                        }
+                        value={
+                          complementsToAdd.find((c) => c.complement === item.id)?.quantity || 0
+                        }
+                        onChange={(value) => {
+                          setComplementsToAdd((prev) => {
+                            const index = prev.findIndex((c) => c.complement === item.id)
+                            if (index === -1) {
+                              return [
+                                ...prev,
+                                {
+                                  complement: item.id,
+                                  group: group.id,
+                                  quantity: value ?? 0,
+                                  group_name: group.name,
+                                  complement_name: item.name
+                                }
+                              ]
+                            } else {
+                              if (value === 0) {
+                                return prev.filter((c) => c.complement !== item.id)
                               }
-                            ]
-                          } else {
-                            if (value === 0) {
-                              return prev.filter((c) => c.complement !== item.id)
+                              const newComplements = [...prev]
+                              newComplements[index] = {
+                                ...newComplements[index],
+                                quantity: value ?? 0
+                              }
+                              return newComplements
                             }
-                            const newComplements = [...prev]
-                            newComplements[index] = {
-                              ...newComplements[index],
-                              quantity: value ?? 0
-                            }
-                            return newComplements
-                          }
-                        })
-                      }}
-                    />
-                  )
-                }
-              ]}
-              dataSource={group.complements}
-              locale={{
-                emptyText: 'Nenhum complemento adicionado'
-              }}
-            />
-          </Flex>
-        ))}
+                          })
+                        }}
+                      />
+                    )
+                  }
+                ]}
+                dataSource={group.complements}
+                locale={{
+                  emptyText: 'Nenhum complemento adicionado'
+                }}
+              />
+            </Flex>
+          ))}
+        </Flex>
         <Form.Item label="Anotacão (opcional)" name="notes" initialValue={''}>
           <Input.TextArea
             size="large"
@@ -311,6 +370,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               <InputNumber
                 min={1}
                 size="large"
+                className="custom-input-number"
                 onPressEnter={(e) => {
                   e.preventDefault()
                   if (!savedCode) {
@@ -337,6 +397,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                 }}
                 id="button-weight"
                 size="large"
+                style={{ height: '48px' }}
               >
                 Atualizar
               </Button>
@@ -357,6 +418,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                   size="large"
                   suffix="Kg"
                   placeholder="0,000 Kg"
+                  className="custom-input"
                   type="text"
                   onChange={(e) => {
                     const value = formatToKilos(e.target.value)

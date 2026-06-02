@@ -12,6 +12,8 @@ export const setLogin: (token: string) => void = (token) => {
 export const logout: () => void = () => {
   localStorage.removeItem(TOKEN_KEY)
   setConfig('terminal-saved-code', null)
+  clearCache('restaurant')
+  clearCache('user')
   window.api.reloadApp()
 }
 

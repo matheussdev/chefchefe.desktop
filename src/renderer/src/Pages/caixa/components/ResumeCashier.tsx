@@ -16,7 +16,7 @@ import React from 'react'
 import { CashierDetail } from '../../../types'
 import { formatCurrency } from '@renderer/utils/currency'
 import dayjs from 'dayjs'
-import { Calendar, Inbox, Landmark, Printer, User } from 'lucide-react'
+import { BanknoteArrowDownIcon, Calendar, Inbox, Printer, User } from 'lucide-react'
 import { useCashier } from '@renderer/hooks/useCashiers'
 const { Text, Title } = Typography
 
@@ -54,7 +54,7 @@ export const ResumeCashier: React.FC<ResumeCashierProps> = ({
       }}
       title={
         <Space style={{ margin: 0, padding: 0 }}>
-          <Landmark color={token.colorPrimary} size={20} />
+          <BanknoteArrowDownIcon color={token.colorPrimary} size={20} />
           Valor em caixa
         </Space>
       }
