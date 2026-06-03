@@ -12,7 +12,7 @@ export const OrdersResum: React.FC<OrdersResumProps> = ({ loadingBill, orders })
       loading={loadingBill}
       title={() => (
         <Flex justify="space-between" align="center">
-          <Text strong>Pedidos</Text>
+          <Text strong>Pedidos lançados</Text>
           <Text>
             {currenyFormat(orders?.reduce((acc, order) => acc + Number(order.total_price), 0) || 0)}
           </Text>

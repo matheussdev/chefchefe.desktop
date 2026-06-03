@@ -15,6 +15,7 @@ interface ProductsSelectTableProps {
   searchTerm: string
   filteredProducts: (searchTerm: string) => Product[]
   choseProduct: (product: Product) => void
+  waiterName?: string
 }
 export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
   loadingBill,
@@ -23,7 +24,8 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
   products,
   searchTerm,
   filteredProducts,
-  choseProduct
+  choseProduct,
+  waiterName
 }) => {
   const navigate = useNavigate()
   const { tables, fetchTables } = useBill()
@@ -46,36 +48,55 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
       gap="1rem"
     >
       {contextHolder}
-      <Flex wrap="wrap" gap="0.5rem" align="center">
-        <Skeleton
-          loading={loadingBill}
-          active
-          paragraph={false}
-          title={{
-            width: 200
-          }}
-          style={{
-            marginBottom: 8
-          }}
-        >
+      <Skeleton
+        loading={loadingBill}
+        active
+        paragraph={false}
+        title={{
+          width: 200
+        }}
+        style={{
+          marginBottom: 8
+        }}
+      >
+        <Flex wrap="wrap" gap="0.5rem" align="center">
           <Button
-            icon={<ChevronLeft size={16} />}
+            icon={<ChevronLeft size={20} />}
             onClick={() => {
-              navigate(-1)
+              try {
+                navigate(-1)
+              } catch {
+                navigate('/terminal')
+              }
             }}
-            type="text"
-            style={{ padding: '0rem' }}
+            style={{ fontSize: '2rem' }}
+            size="large"
           >
-            Voltar (Q)
+            <Text style={{ fontSize: '1.5rem' }} strong>
+              Voltar
+            </Text>
           </Button>
           <Text
             strong
             style={{
-              marginRight: '0.5rem'
+              marginRight: '0.5rem',
+              fontSize: '1.8rem'
             }}
           >
             Comanda {bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Text>
+          {waiterName && (
+            <Text
+              strong
+              style={{
+                marginLeft: 'auto',
+                marginRight: '0.5rem',
+                fontSize: '1.8rem'
+              }}
+            >
+              Garçom: {waiterName}
+            </Text>
+          )}
           <Form
             style={{ marginLeft: 'auto' }}
             onFinish={(values) => {
@@ -96,7 +117,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
                 })
             }}
           >
-            <Space.Compact>
+            <Space.Compact size="large">
               <Form.Item name="table" label="Mesa" noStyle initialValue={bill?.table || undefined}>
                 <Select
                   disabled={loadingChangeTable}
@@ -104,6 +125,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
                     width: 120
                   }}
                   placeholder="Sem mesa"
+                  size="large"
                   options={[
                     { label: 'Sem mesa', value: undefined },
                     ...tables.map((table) => ({
@@ -123,6 +145,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
               <Button
                 id="button-change-table"
                 icon={<Save size={16} />}
+                size="large"
                 htmlType="submit"
                 loading={loadingChangeTable}
               >
@@ -130,15 +153,15 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
               </Button>
             </Space.Compact>
           </Form>
-        </Skeleton>
-      </Flex>
+        </Flex>
+      </Skeleton>
       <Table
         loading={loadingProducts || loadingBill}
         dataSource={searchTerm ? filteredProducts(searchTerm) : products}
         size="small"
         pagination={false}
         scroll={{
-          y: window.innerHeight - 185
+          y: window.innerHeight - 220
         }}
         virtual
         onRow={(record) => {

@@ -18,13 +18,13 @@ import { currenyFormat } from '@renderer/utils'
 import { printOrderReceipt } from '@renderer/utils/Printers'
 import dayjs from 'dayjs'
 import { brlToNumber, formatToKilos } from '@renderer/utils/currency'
-import { getConfig } from '@renderer/services/auth'
 const { Text } = Typography
 interface OrderModalProps {
   selectedProduct: Product | null
   onClose: () => void
   onSuccess?: (order: Order) => void
   billId: string
+  savedCode?: string
 }
 interface ProductToAdd {
   bill: string
@@ -121,12 +121,12 @@ export const OrderModal: React.FC<OrderModalProps> = ({
   selectedProduct,
   onClose,
   onSuccess,
-  billId
+  billId,
+  savedCode
 }) => {
   const [form] = Form.useForm()
   const [messageApi, contextHolder] = message.useMessage()
   const [loadingAdd, setLoadingAdd] = React.useState(false)
-  const savedCode = getConfig('terminal-saved-code') || ''
   const [complementsToAdd, setComplementsToAdd] = React.useState<ComplementToAdd[]>([])
   const disabled_to_add = React.useMemo(() => {
     if (!selectedProduct) return true
@@ -197,8 +197,6 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         })
         .catch((err) => {
           messageApi.error(err.response?.data?.detail || 'Erro ao adicionar produto')
-        })
-        .finally(() => {
           setLoadingAdd(false)
         })
     },
@@ -228,7 +226,11 @@ export const OrderModal: React.FC<OrderModalProps> = ({
       onCancel={onClose}
       closeIcon={false}
       centered
-      title={selectedProduct?.name}
+      title={
+        <Text strong style={{ fontSize: '1.8rem' }}>
+          {selectedProduct?.name}
+        </Text>
+      }
       destroyOnHidden
       footer={
         <Flex>
@@ -238,12 +240,13 @@ export const OrderModal: React.FC<OrderModalProps> = ({
           </Text>
         </Flex>
       }
-      width={600}
+      width={700}
       afterOpenChange={(open) => {
         if (!open) {
           setComplementsToAdd([])
           form.resetFields()
         } else {
+          setLoadingAdd(false)
           form?.setFieldsValue({
             quantity: selectedProduct?.sell_type === 'UN' ? 1 : undefined
           })
@@ -260,7 +263,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
       <Form form={form} layout="vertical" onFinish={onFinish}>
         <Form.Item name="product" initialValue={selectedProduct?.id} hidden></Form.Item>
         <Form.Item name="bill" initialValue={billId} hidden></Form.Item>
-        <Flex vertical style={{ maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }} gap="1rem">
+        <Flex vertical style={{ maxHeight: 'calc(100vh - 340px)', overflowY: 'auto' }} gap="1rem">
           {selectedProduct?.complement_groups.map((group) => (
             <Flex vertical key={group.id} gap="0.5rem" style={{ marginBottom: '1rem' }}>
               <Text strong>{group.name}</Text>
@@ -276,8 +279,14 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                     dataIndex: 'name',
                     key: 'name',
                     render: (value, record) => (
-                      <Text>
-                        {value} - {`${currenyFormat(Number(record.price))}`}
+                      <Text
+                        style={{ display: 'block', fontSize: '1.5rem' }}
+                        ellipsis={{ tooltip: value }}
+                      >
+                        {value}{' '}
+                        <Text
+                          style={{ fontSize: '1rem' }}
+                        >{`${currenyFormat(Number(record.price))}`}</Text>
                       </Text>
                     )
                   },
@@ -458,6 +467,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               <Input
                 type="password"
                 size="large"
+                className="custom-input"
                 placeholder="****"
                 autoComplete="new-password"
                 onPressEnter={(e) => {

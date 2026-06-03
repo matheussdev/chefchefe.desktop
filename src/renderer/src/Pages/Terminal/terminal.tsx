@@ -2,7 +2,7 @@ import { Container } from '@renderer/components/Container'
 import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
 import { BillDetail, Order, Product } from '@renderer/types'
-import { Flex, message } from 'antd'
+import { Button, Flex, Form, Input, message, Modal } from 'antd'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ProductsSelectTable } from './components/productsSelctTable'
@@ -10,7 +10,7 @@ import { OrdersResum } from './components/ordersResum'
 import { OrderModal } from './components/orderModal'
 import { useHotkeys } from 'react-hotkeys-hook'
 import api from '@renderer/services/api'
-
+import { getConfig } from '@renderer/services/auth'
 export const TerminalSelectedPage: React.FC = () => {
   const { products, fetchProducts, fetchBillById } = useBill()
   const [bill, setBill] = useState<BillDetail | null>(null)
@@ -20,7 +20,7 @@ export const TerminalSelectedPage: React.FC = () => {
   const hasUpdatedBills = useRef(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [, contextHolder] = message.useMessage()
+  const [messageApi, contextHolder] = message.useMessage()
   const [loadingOrders, setLoadingOrders] = React.useState(false)
   const [orders, setOrders] = React.useState<Order[]>([])
   const fetchOrders = useCallback((id: string) => {
@@ -81,11 +81,15 @@ export const TerminalSelectedPage: React.FC = () => {
         break
     }
   })
-
+  const [defaultCode, setDefaultCode] = useState('')
+  const [employeeName, setEmployeeName] = useState('')
+  const savedCode = getConfig('terminal-saved-code') || ''
+  const [loaingFindingCode, setLoadingFindingCode] = useState(false)
   return (
     <Container>
       {contextHolder}
       <ProductsSelectTable
+        waiterName={employeeName}
         loadingBill={loadingBill}
         bill={bill}
         loadingProducts={loadingProducts}
@@ -94,6 +98,73 @@ export const TerminalSelectedPage: React.FC = () => {
         filteredProducts={filteredProducts}
         choseProduct={choseProduct}
       />
+      <Modal
+        title="Código do garçom"
+        open={!defaultCode && !savedCode}
+        onCancel={() => {}}
+        footer={null}
+        closeIcon={null}
+      >
+        <Form
+          layout="vertical"
+          onFinish={(values) => {
+            const code = values.code.trim()
+            setLoadingFindingCode(true)
+            api
+              .get('v1/desktop/find-employee/', {
+                params: {
+                  code
+                }
+              })
+              .then((response) => {
+                if (response.data) {
+                  setDefaultCode(code)
+                  setEmployeeName(response.data.name)
+                }
+              })
+              .catch(() => {
+                messageApi.error('Código inválido')
+              })
+              .finally(() => {
+                setLoadingFindingCode(false)
+              })
+          }}
+        >
+          <Form.Item
+            name="code"
+            required
+            rules={[{ required: true, message: 'Digite o código do garçom' }]}
+          >
+            <Input
+              className="custom-input"
+              type="password"
+              size="large"
+              placeholder="Digite o código do garçom"
+              autoComplete="off"
+              id="waiter-code-input"
+            />
+          </Form.Item>
+          <Form.Item>
+            <Flex gap="1rem" justify="end">
+              <Button
+                htmlType="submit"
+                type="primary"
+                size="large"
+                block
+                loading={loaingFindingCode}
+                onClick={() => {
+                  const inputElement = document.getElementById(
+                    'waiter-code-input'
+                  ) as HTMLInputElement
+                  inputElement?.focus()
+                }}
+              >
+                Salvar
+              </Button>
+            </Flex>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {window.innerWidth > 920 && (
         <Flex
@@ -135,6 +206,7 @@ export const TerminalSelectedPage: React.FC = () => {
         </Flex>
       )}
       <OrderModal
+        savedCode={defaultCode || savedCode}
         billId={billId || ''}
         selectedProduct={selectedProduct}
         onClose={() => setSelectedProduct(null)}

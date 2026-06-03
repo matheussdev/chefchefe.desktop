@@ -272,6 +272,12 @@ export const BillDetailPage: React.FC = () => {
         onClose={() => setUnifyDrawerOpen(false)}
         open={unifyDrawerOpen}
         destroyOnHidden
+        afterOpenChange={(open) => {
+          if (open) {
+            const element = document.getElementById('select-bills-to-unify')
+            element?.focus()
+          }
+        }}
       >
         <Form
           layout="vertical"
@@ -303,8 +309,20 @@ export const BillDetailPage: React.FC = () => {
               })
           }}
         >
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block size="large" loading={loadingUnify}>
+              Salvar
+            </Button>
+          </Form.Item>
+          <Form.Item>
+            <Text type="secondary">
+              clique no campo abaixo para selecionar as comandas que deseja unificar. Somente
+              comandas abertas
+            </Text>
+          </Form.Item>
           <Form.Item label="Comandas para unificar" name="bills">
             <Select
+              id="select-bills-to-unify"
               placeholder="Clique aqui e selecione a comanda para unificar"
               allowClear
               style={{ width: '100%', minHeight: '80px' }}
@@ -318,11 +336,6 @@ export const BillDetailPage: React.FC = () => {
                 optionFilterProp: 'label'
               }}
             />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block size="large" loading={loadingUnify}>
-              Salvar
-            </Button>
           </Form.Item>
         </Form>
       </Drawer>
