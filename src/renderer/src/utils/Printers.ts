@@ -707,7 +707,7 @@ export async function printOrderReceipt(payload: {
     style: {
       textAlign: 'center',
       fontWeight: '700',
-      fontSize: '25px'
+      fontSize: '30px'
     }
   })
 
@@ -718,7 +718,7 @@ export async function printOrderReceipt(payload: {
       style: {
         textAlign: 'center',
         fontWeight: '500',
-        fontSize: '25px'
+        fontSize: '30px'
       }
     })
   }
@@ -726,11 +726,11 @@ export async function printOrderReceipt(payload: {
   if (order.notes) {
     lines.push({
       type: 'text',
-      value: `Observações: ${order.notes}`,
+      value: `${order.notes}`,
       style: {
         textAlign: 'center',
         fontWeight: '500',
-        fontSize: '25px'
+        fontSize: '30px'
       }
     })
 
