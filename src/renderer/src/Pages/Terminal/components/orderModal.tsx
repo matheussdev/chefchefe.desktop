@@ -251,8 +251,9 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             quantity: selectedProduct?.sell_type === 'UN' ? 1 : undefined
           })
           if (selectedProduct?.sell_type === 'KG') {
-            const buttonElement = document.getElementById('button-weight')
-            buttonElement?.focus()
+            // const buttonElement = document.getElementById('button-weight')
+            // buttonElement?.focus()
+            form?.getFieldInstance('quantity')?.focus()
           } else {
             form?.getFieldInstance('quantity')?.focus()
           }
@@ -260,7 +261,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
       }}
     >
       {contextHolder}
-      <Form form={form} layout="vertical" onFinish={onFinish}>
+      <Form form={form} layout="vertical" onFinish={onFinish} autoFocus={false}>
         <Form.Item name="product" initialValue={selectedProduct?.id} hidden></Form.Item>
         <Form.Item name="bill" initialValue={billId} hidden></Form.Item>
         <Flex vertical style={{ maxHeight: 'calc(100vh - 340px)', overflowY: 'auto' }} gap="1rem">
@@ -353,6 +354,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         <Form.Item label="Anotacão (opcional)" name="notes" initialValue={''}>
           <Input.TextArea
             size="large"
+            autoFocus={false}
             onKeyDown={(e) => {
               if (e.key === 'ArrowRight') {
                 e.preventDefault()
