@@ -236,20 +236,21 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 method: payment.method,
                 amount: brlToNumber(String(payment.amount) || '0')
               })),
-              change: change < 0 ? 0 : brlToNumber(changeValue || '0'),
-              tax: tax,
+              change: Number(change.toFixed(2)) < 0 ? 0 : brlToNumber(changeValue || '0'),
+              tax: Number(tax.toFixed(2)),
               discount: 0,
-              subtotal: subtotal,
-              total: Math.round(total * 100) / 100,
-              total_received: payments.reduce(
-                (acc, payment) => acc + brlToNumber(String(payment.amount) || '0'),
-                0
+              subtotal: Number(subtotal.toFixed(2)),
+              total: Number(total.toFixed(2)),
+              total_received: Number(
+                payments
+                  .reduce((acc, payment) => acc + brlToNumber(String(payment.amount) || '0'), 0)
+                  .toFixed(2)
               ),
               bills,
               cashier: selectedCashier?.id,
-              change_method: change >= 0 ? selectedChangeMethod : undefined,
-              code: change < 0 ? finishCode : undefined,
-              reason: change < 0 ? form.getFieldValue('reason') : undefined
+              change_method: Number(change.toFixed(2)) >= 0 ? selectedChangeMethod : undefined,
+              code: Number(change.toFixed(2)) < 0 ? finishCode : undefined,
+              reason: Number(change.toFixed(2)) < 0 ? form.getFieldValue('reason') : undefined
             }
             api
               .post('/v1/desktop/operation/finish-bills/', {
@@ -264,11 +265,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   bill: {
                     bill_number: bills_number || '',
                     table: '',
-                    subtotal: datasend.subtotal,
-                    tax: datasend.tax,
-                    total: datasend.total,
-                    total_received: datasend.total_received,
-                    change: datasend.change
+                    subtotal: Number(datasend.subtotal.toFixed(2)),
+                    tax: Number(datasend.tax.toFixed(2)),
+                    total: Number(datasend.total.toFixed(2)),
+                    total_received: Number(datasend.total_received.toFixed(2)),
+                    change: Number(datasend.change.toFixed(2))
                   },
                   items: orders.map((order) => ({
                     name: order.name,
@@ -441,7 +442,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           {change !== 0 && (
             <>
               <>
-                {brlToNumber(changeValue) > change && (
+                {Number(brlToNumber(changeValue).toFixed(2)) > Number(change.toFixed(2)) && (
                   <Text type="danger" style={{ fontSize: '0.9rem' }}>
                     O valor digitado é menor que o valor da comanda. Verifique o valor do pagamento.
                   </Text>
@@ -508,13 +509,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                       color: change >= 0 ? '#47a618' : 'red'
                     }}
                   >
-                    {currenyFormat(change >= 0 ? change : Math.abs(change))}
+                    {currenyFormat(
+                      Number(change >= 0 ? change.toFixed(2) : Math.abs(change).toFixed(2))
+                    )}
                   </Text>
                 )}
               </Flex>
             </>
           )}
-          {change < 0 && (
+          {Number(change.toFixed(2)) < 0 && (
             <>
               <Form.Item label="Motivo" name="reason">
                 <Input.TextArea size="large" placeholder="Motivo" />
@@ -558,7 +561,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 marginLeft: 'auto'
               }}
               size="large"
-              disabled={payments.some((payment) => !payment.method) || (change < 0 && !finishCode)}
+              disabled={
+                payments.some((payment) => !payment.method) ||
+                (Number(change.toFixed(2)) < 0 && !finishCode)
+              }
               ref={finishButtonRef}
               loading={loadingFinish}
               icon={<Receipt size={16} />}
@@ -571,7 +577,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 form.submit()
               }}
               size="large"
-              disabled={payments.some((payment) => !payment.method) || (change < 0 && !finishCode)}
+              disabled={
+                payments.some((payment) => !payment.method) ||
+                (Number(change.toFixed(2)) < 0 && !finishCode)
+              }
               ref={finishButtonRef}
               loading={loadingFinish}
               icon={<CheckCheck size={16} />}
