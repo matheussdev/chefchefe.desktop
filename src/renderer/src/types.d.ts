@@ -59,6 +59,7 @@ export interface Order {
   quantity: string
   unit_price: string
   complements_price: string
+  table_number: string
   total_price: string
   status: string
   notes: string
@@ -67,6 +68,7 @@ export interface Order {
   created: string
   bill_number: number
   product_name: string
+  launched_by_name: string
 }
 
 export interface BillGroup {

@@ -14,6 +14,7 @@ interface SearchBoxProps {
   onTimeSearch?: (value: string) => void
   onArrow?: (direction: 'up' | 'down') => void
   onReload?: () => void
+  showKeyBoard?: boolean
 }
 
 export const SearchBox: React.FC<SearchBoxProps> = ({
@@ -24,7 +25,8 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
   startF,
   srtartFocus,
   onArrow,
-  onReload
+  onReload,
+  showKeyBoard = true
 }) => {
   const form = React.useRef<FormInstance>(null)
   useHotkeys(
@@ -121,25 +123,27 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
           />
         </Form.Item>
       </Form>
-      <NumberPad
-        onFinish={() => {
-          form.current?.submit()
-        }}
-        onClick={(value) => {
-          const current = form.current?.getFieldValue('search') || ''
-          form.current?.getFieldInstance('search')?.focus()
-          form.current?.setFieldsValue({ search: current + value })
-        }}
-        onClear={() => {
-          form.current?.getFieldInstance('search')?.focus()
-          form.current?.setFieldsValue({ search: '' })
-        }}
-        onDelete={() => {
-          const current = form.current?.getFieldValue('search') || ''
-          form.current?.getFieldInstance('search')?.focus()
-          form.current?.setFieldsValue({ search: current.slice(0, -1) })
-        }}
-      />
+      {showKeyBoard && (
+        <NumberPad
+          onFinish={() => {
+            form.current?.submit()
+          }}
+          onClick={(value) => {
+            const current = form.current?.getFieldValue('search') || ''
+            form.current?.getFieldInstance('search')?.focus()
+            form.current?.setFieldsValue({ search: current + value })
+          }}
+          onClear={() => {
+            form.current?.getFieldInstance('search')?.focus()
+            form.current?.setFieldsValue({ search: '' })
+          }}
+          onDelete={() => {
+            const current = form.current?.getFieldValue('search') || ''
+            form.current?.getFieldInstance('search')?.focus()
+            form.current?.setFieldsValue({ search: current.slice(0, -1) })
+          }}
+        />
+      )}
       <Text
         type="secondary"
         style={{ fontSize: '0.7rem', marginTop: '0.5rem', display: 'block', textAlign: 'center' }}

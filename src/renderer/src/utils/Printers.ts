@@ -1,3 +1,6 @@
+import { Order } from '@renderer/types'
+import dayjs from 'dayjs'
+
 export async function printConfigPrinter(printerName: string) {
   try {
     await window.api.printReceipt({
@@ -137,6 +140,7 @@ export async function printBillReceipt(payload: {
     subtotal: number
     tax: number
     total: number
+    discount: number
     total_received?: number
     change?: number
   }
@@ -342,6 +346,33 @@ export async function printBillReceipt(payload: {
             width: 0.25,
             textAlign: 'right',
             fontWeight: '700',
+            paddingRight: '10px'
+          }
+        }
+      ],
+      [
+        {
+          type: 'text',
+          value: 'Desconto',
+          style: {
+            width: 0.75,
+            textAlign: 'left',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0'
+          }
+        },
+        {
+          type: 'text',
+          value: `-${money(bill.discount || 0)}`,
+          style: {
+            width: 0.25,
+            textAlign: 'right',
+            fontWeight: '700',
+            border: '0px solid #fff',
+
+            padding: '2px 0',
             paddingRight: '10px'
           }
         }
@@ -744,6 +775,129 @@ export async function printOrderReceipt(payload: {
       }
     })
   }
+  lines.push(lineSeparator() as ReceiptLine)
+  lines.push(lineSeparator() as ReceiptLine)
+  lines.push(lineSeparator() as ReceiptLine)
+  await window.api.printReceipt({
+    printerName,
+    lines
+  })
+}
+
+export async function printOrderBillReceipt(orders: Order[], printerName: string) {
+  const lines: ReceiptLine[] = []
+
+  // HEADER
+  lines.push({
+    type: 'text',
+    value: 'NOVO PEDIDO',
+    style: {
+      textAlign: 'center',
+      fontWeight: '700',
+      fontSize: '18px'
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Comanda: ${orders[0].bill_number}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '700',
+      fontSize: '20px'
+    }
+  })
+
+  if (orders[0].table_number) {
+    lines.push({
+      type: 'text',
+      value: `Mesa: ${orders[0].table_number}`,
+      style: {
+        textAlign: 'left',
+        fontWeight: '700',
+        fontSize: '20px'
+      }
+    })
+  }
+
+  lines.push({
+    type: 'text',
+    value: `Garçom: ${orders[0].launched_by_name}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '500',
+      fontSize: '20px'
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Pedido: ${orders[0].number}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '700',
+      fontSize: '12px'
+    }
+  })
+
+  lines.push({
+    type: 'text',
+    value: `Data: ${dayjs(orders[0].created).format('DD/MM/YYYY HH:mm:ss')}`,
+    style: {
+      textAlign: 'left',
+      fontWeight: '500',
+      fontSize: '12px'
+    }
+  })
+
+  lines.push(lineSeparator() as ReceiptLine)
+
+  // PRODUTO
+  for (const order of orders) {
+    lines.push({
+      type: 'text',
+      value: `${Number(order.quantity)}x ${order.product_name}`,
+      style: {
+        textAlign: 'center',
+        fontWeight: '700',
+        fontSize: '30px'
+      }
+    })
+    for (const complement of order.complements || []) {
+      lines.push({
+        type: 'text',
+        value: `${complement}`,
+        style: {
+          textAlign: 'center',
+          fontWeight: '500',
+          fontSize: '30px'
+        }
+      })
+    }
+    if (order.notes) {
+      lines.push({
+        type: 'text',
+        value: `${order.notes}`,
+        style: {
+          textAlign: 'center',
+          fontWeight: '500',
+          fontSize: '30px'
+        }
+      })
+
+      lines.push({
+        type: 'text',
+        value: '',
+        style: {
+          textAlign: 'center',
+          fontWeight: '500',
+          fontSize: '25px'
+        }
+      })
+    }
+    lines.push(lineSeparator() as ReceiptLine)
+  }
+
   lines.push(lineSeparator() as ReceiptLine)
   lines.push(lineSeparator() as ReceiptLine)
   lines.push(lineSeparator() as ReceiptLine)

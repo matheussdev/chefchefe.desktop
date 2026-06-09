@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
+  BadgePercent,
   Banknote,
   CheckCheck,
   CreditCard,
@@ -65,7 +66,8 @@ interface BillPriceResumProps {
 
 const Resum: React.FC<{
   values: { subtotal: number; tax: number; discount: number }
-}> = ({ values }) => {
+  onDiscountClick?: () => void
+}> = ({ values, onDiscountClick }) => {
   const total = values.subtotal + values.tax - values.discount
   return (
     <>
@@ -74,13 +76,27 @@ const Resum: React.FC<{
         <Text>{currenyFormat(values?.subtotal || 0)}</Text>
       </Flex>
       <Flex gap="0.5rem" align="flex-end" justify="space-between">
+        <Text strong>Desconto:</Text>
+        {values.discount > 0 ? (
+          <Text>-{currenyFormat(values?.discount || 0)}</Text>
+        ) : onDiscountClick ? (
+          <Button
+            onClick={onDiscountClick}
+            size="small"
+            icon={<BadgePercent size={16} />}
+            type="dashed"
+          >
+            Aplicar Desconto
+          </Button>
+        ) : (
+          <Text>-{currenyFormat(values?.discount || 0)}</Text>
+        )}
+      </Flex>
+      <Flex gap="0.5rem" align="flex-end" justify="space-between">
         <Text strong>Taxa de serviço:</Text>
         <Text>{currenyFormat(values?.tax || 0)}</Text>
       </Flex>
-      <Flex gap="0.5rem" align="flex-end" justify="space-between">
-        <Text strong>Desconto:</Text>
-        <Text>{currenyFormat(values?.discount || 0)}</Text>
-      </Flex>
+
       <Divider
         style={{
           marginTop: '0.3rem',
@@ -122,6 +138,8 @@ interface PaymentFormProps {
     price: number
     product_id?: string
   }[]
+  discount: number
+  discountCode?: string
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -130,7 +148,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   total,
   bills,
   bills_number,
-  orders
+  orders,
+  discount,
+  discountCode
 }) => {
   const [paymentModalVisible, setPaymentModalVisible] = React.useState(false)
   const { restaurant } = useAuth()
@@ -238,7 +258,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               })),
               change: Number(change.toFixed(2)) < 0 ? 0 : brlToNumber(changeValue || '0'),
               tax: Number(tax.toFixed(2)),
-              discount: 0,
+              discount: Number(discount.toFixed(2)),
+              discount_code: discountCode,
               subtotal: Number(subtotal.toFixed(2)),
               total: Number(total.toFixed(2)),
               total_received: Number(
@@ -265,6 +286,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   bill: {
                     bill_number: bills_number || '',
                     table: '',
+                    discount: Number(datasend.discount.toFixed(2)),
                     subtotal: Number(datasend.subtotal.toFixed(2)),
                     tax: Number(datasend.tax.toFixed(2)),
                     total: Number(datasend.total.toFixed(2)),
@@ -438,7 +460,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           >
             Adicionar forma de pagamento
           </Button>
-          <Flex vertical>{subtotal && <Resum values={{ subtotal, tax, discount: 0 }} />}</Flex>
+          <Flex vertical>
+            {subtotal && <Resum values={{ subtotal, tax, discount: discount }} />}
+          </Flex>
           {change !== 0 && (
             <>
               <>
@@ -608,6 +632,16 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, bills,
   const [taxApplied, setTaxApplied] = React.useState(
     restaurant?.tip_aplyed_by_default ? true : false
   )
+  const [taxType, setTaxType] = React.useState<'percentage' | 'value'>(
+    restaurant?.tip_type || 'percentage'
+  )
+  const [taxInput, setTaxInput] = React.useState(() => {
+    if (restaurant?.tip_aplyed_by_default) {
+      return formatToBRL(String(restaurant.default_tip_value || '0'))
+    }
+    return ''
+  })
+  const [discountValue, setDiscountValue] = React.useState(0)
   const printBill = useCallback(async () => {
     const printer = getConfig('default-printer') || 'caixa'
     messageApi.loading('Gerando recibo para impressão...', 0)
@@ -635,7 +669,8 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, bills,
           table: bills.map((bill) => bill?.table_number).join(', '),
           subtotal,
           tax: taxApplied ? taxValue : 0,
-          total: Math.round((subtotal + (taxApplied ? taxValue : 0)) * 100) / 100
+          discount: discountValue,
+          total: Math.round((subtotal + (taxApplied ? taxValue : 0) - discountValue) * 100) / 100
         },
         items: newOrders.map((order) => ({
           name: order.name,
@@ -661,7 +696,7 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, bills,
       messageApi.destroy()
       messageApi.error('Erro ao imprimir recibo')
     }
-  }, [bills, orders, restaurant, subtotal, taxApplied, taxValue, messageApi])
+  }, [bills, orders, restaurant, subtotal, taxApplied, taxValue, messageApi, discountValue])
   useHotkeys(
     ['p', 'r'],
     async (_, handler) => {
@@ -688,6 +723,34 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, bills,
       setTaxValue(tax)
     }
   }, [subtotal, restaurant])
+  const [openDiscountModal, setOpenDiscountModal] = React.useState(false)
+  const [loadingFindingDiscount, setLoadingFindingDiscount] = React.useState(false)
+  const [discountForm] = Form.useForm()
+  const [discountCode, setDiscountCode] = React.useState<{
+    code: string
+    method: 'PERCENTAGE' | 'VALUE' | 'VALUE_VARIABLE' | 'PERCENTAGE_VARIABLE'
+    min_value: 'string'
+    max_value: 'string'
+  } | null>(null)
+  const findDiscount = useCallback(
+    async (code: string) => {
+      setLoadingFindingDiscount(true)
+      api
+        .get(`/v1/desktop/financial/discount-codes/`, { params: { code } })
+        .then((res) => {
+          setDiscountCode(res.data)
+          setLoadingFindingDiscount(false)
+          const button = document.getElementById('apply-discount-button')
+          button?.focus()
+        })
+        .catch((err) => {
+          errorActions(err)
+          setLoadingFindingDiscount(false)
+          messageApi.error(err.response?.data?.detail || 'Erro ao buscar código de desconto')
+        })
+    },
+    [messageApi]
+  )
   return (
     restaurant && (
       <>
@@ -731,12 +794,15 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, bills,
                   confirmButton?.focus()
                   return false
                 }
+                const newTotal = subtotal - discountValue
                 let tax =
                   values.taxType === 'percentage'
-                    ? (subtotal * Number(values.taxValue)) / 100
+                    ? (newTotal * Number(values.taxValue)) / 100
                     : Number(values.taxValue)
                 tax = Math.round(tax * 100) / 100
                 setTaxValue(tax)
+                setTaxType(values.taxType)
+                setTaxInput(formatToBRL(String(values.taxValue)))
                 const confirmButton = document.getElementById('confirm-payment-button')
                 confirmButton?.focus()
                 return true
@@ -792,6 +858,7 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, bills,
             </Space.Compact>
           </Form>
         </Card>
+
         <Card
           styles={{
             body: {
@@ -802,16 +869,142 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, bills,
             }
           }}
         >
-          <Resum values={{ subtotal: subtotal, tax: taxApplied ? taxValue : 0, discount: 0 }} />
+          <Resum
+            values={{ subtotal: subtotal, tax: taxApplied ? taxValue : 0, discount: discountValue }}
+            onDiscountClick={() => {
+              setOpenDiscountModal(true)
+            }}
+          />
           <PaymentForm
             subtotal={Math.round(subtotal * 100) / 100}
             tax={taxApplied ? Math.round(taxValue * 100) / 100 : 0}
-            total={Math.round((subtotal + (taxApplied ? taxValue : 0)) * 100) / 100}
+            total={Math.round((subtotal + (taxApplied ? taxValue : 0) - discountValue) * 100) / 100}
             bills={bills.map((bill) => bill.id)}
             bills_number={bills.map((bill) => bill.number).join(', ')}
             orders={orders}
+            discountCode={discountCode?.code}
+            discount={discountValue}
           />
         </Card>
+        <Modal
+          centered
+          open={openDiscountModal}
+          onCancel={() => setOpenDiscountModal(false)}
+          footer={null}
+          width={600}
+          destroyOnHidden
+          afterOpenChange={(open) => {
+            if (open) {
+              discountForm?.getFieldInstance('discountCode')?.focus()
+              if (discountCode) {
+                discountForm.setFieldsValue({
+                  discountCode: discountCode.code,
+                  discountValue: formatToBRL(discountCode.min_value)
+                })
+              } else {
+                discountForm.resetFields()
+              }
+            }
+          }}
+        >
+          <Form
+            layout="vertical"
+            form={discountForm}
+            onFinish={(values) => {
+              let discount = 0
+              if (discountCode) {
+                switch (discountCode.method) {
+                  case 'PERCENTAGE':
+                    discount = (subtotal * brlToNumber(values.discountValue || '0')) / 100
+                    break
+                  case 'VALUE':
+                    discount = brlToNumber(values.discountValue || '0')
+                    break
+                  case 'PERCENTAGE_VARIABLE':
+                    discount = (subtotal * brlToNumber(values.discountValue || '0')) / 100
+                    break
+                  case 'VALUE_VARIABLE':
+                    discount = brlToNumber(values.discountValue || '0')
+                    break
+                }
+              }
+              discount = Math.round(discount * 100) / 100
+              setDiscountValue(discount)
+              const newtotal = subtotal - discount
+              let tax =
+                taxType === 'percentage'
+                  ? (newtotal * brlToNumber(taxInput || '0')) / 100
+                  : Number(brlToNumber(taxInput || '0'))
+              tax = Math.round(tax * 100) / 100
+              setTaxValue(tax)
+              setOpenDiscountModal(false)
+            }}
+          >
+            <Form.Item label="Código de desconto" name="discountCode">
+              <Input
+                placeholder="Digite o código de desconto"
+                size="large"
+                suffix={
+                  <Button
+                    onClick={() => {
+                      if (discountCode) {
+                        setDiscountCode(null)
+                        discountForm.resetFields()
+                      } else {
+                        const code = discountForm.getFieldValue('discountCode')
+                        if (code) {
+                          findDiscount(code)
+                        }
+                      }
+                    }}
+                  >
+                    {discountCode ? 'Limpar' : 'Buscar'}
+                  </Button>
+                }
+                onPressEnter={async (e) => {
+                  e.preventDefault()
+                  const code = discountForm.getFieldValue('discountCode')
+                  if (code) {
+                    await findDiscount(code)
+                  }
+                }}
+              />
+            </Form.Item>
+            {discountCode && (
+              <Form.Item
+                label="Desconto"
+                name="discountValue"
+                initialValue={formatToBRL(discountCode.min_value)}
+              >
+                <Input
+                  size="large"
+                  prefix={
+                    discountCode.method === 'PERCENTAGE' ||
+                    discountCode.method === 'PERCENTAGE_VARIABLE'
+                      ? '%'
+                      : 'R$'
+                  }
+                  readOnly={discountCode.max_value === discountCode.min_value}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    discountForm.setFieldsValue({
+                      discountValue: formatToBRL(value)
+                    })
+                  }}
+                />
+              </Form.Item>
+            )}
+            <Button
+              type="primary"
+              htmlType="submit"
+              id="apply-discount-button"
+              loading={loadingFindingDiscount}
+              disabled={!discountCode}
+            >
+              Aplicar desconto
+            </Button>
+          </Form>
+        </Modal>
       </>
     )
   )

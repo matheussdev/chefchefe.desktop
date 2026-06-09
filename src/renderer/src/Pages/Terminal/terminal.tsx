@@ -2,7 +2,7 @@ import { Container } from '@renderer/components/Container'
 import { SearchBox } from '@renderer/components/SearchBox'
 import { useBill } from '@renderer/hooks/useBills'
 import { BillDetail, Order, Product } from '@renderer/types'
-import { Button, Flex, Form, Input, message, Modal } from 'antd'
+import { Flex, Modal, Typography } from 'antd'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ProductsSelectTable } from './components/productsSelctTable'
@@ -10,7 +10,19 @@ import { OrdersResum } from './components/ordersResum'
 import { OrderModal } from './components/orderModal'
 import { useHotkeys } from 'react-hotkeys-hook'
 import api from '@renderer/services/api'
-import { getConfig } from '@renderer/services/auth'
+const { Text } = Typography
+interface ToAddOrder {
+  bill: string
+  product: string
+  notes: string
+  status: string
+  quantity: number
+  product_name: string
+  complements: {
+    complement: string
+    quantity: number
+  }[]
+}
 export const TerminalSelectedPage: React.FC = () => {
   const { products, fetchProducts, fetchBillById } = useBill()
   const [bill, setBill] = useState<BillDetail | null>(null)
@@ -20,9 +32,9 @@ export const TerminalSelectedPage: React.FC = () => {
   const hasUpdatedBills = useRef(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [messageApi, contextHolder] = message.useMessage()
   const [loadingOrders, setLoadingOrders] = React.useState(false)
   const [orders, setOrders] = React.useState<Order[]>([])
+  const [toAddOrders, setToAddOrders] = React.useState<ToAddOrder[]>([])
   const fetchOrders = useCallback((id: string) => {
     setLoadingOrders(true)
     api
@@ -61,7 +73,8 @@ export const TerminalSelectedPage: React.FC = () => {
       (product) =>
         product.name.toLowerCase().includes(value.toLowerCase()) ||
         (product.code ? product.code.toLocaleLowerCase() === value.toLocaleLowerCase() : false) ||
-        product?.slug.toLowerCase().includes(value.toLowerCase())
+        product?.slug.toLowerCase().includes(value.toLowerCase()) ||
+        product.category.toLowerCase().includes(value.toLowerCase())
     )
   const choseProduct = async (product: Product) => {
     setSelectedProduct(product)
@@ -73,23 +86,48 @@ export const TerminalSelectedPage: React.FC = () => {
   }
 
   const navigate = useNavigate()
-
+  const [exitConfirm, setExitConfirm] = useState(false)
   useHotkeys(['q', 'r', 'e'], async (_, handler) => {
     switch (handler.hotkey) {
       case 'q':
-        navigate(-1)
+        if (toAddOrders.length > 0) {
+          if (!exitConfirm) {
+            setExitConfirm(true)
+          }
+        } else {
+          try {
+            navigate(-1)
+          } catch {
+            navigate('/terminal')
+          }
+        }
         break
     }
   })
-  const [defaultCode, setDefaultCode] = useState('')
-  const [employeeName, setEmployeeName] = useState('')
-  const savedCode = getConfig('terminal-saved-code') || ''
-  const [loaingFindingCode, setLoadingFindingCode] = useState(false)
   return (
     <Container>
-      {contextHolder}
+      <Modal
+        open={exitConfirm}
+        onOk={() => {
+          try {
+            navigate(-1)
+          } catch {
+            navigate('/terminal')
+          }
+        }}
+        okText="Sair sem salvar"
+        cancelText="Cancelar"
+        okButtonProps={{
+          danger: true
+        }}
+        onCancel={() => setExitConfirm(false)}
+        title="Tem certeza que deseja sair?"
+      >
+        <Text style={{ fontSize: '1.5rem' }}>
+          Você tem pedidos não enviados, se sair agora eles serão perdidos.
+        </Text>
+      </Modal>
       <ProductsSelectTable
-        waiterName={employeeName}
         loadingBill={loadingBill}
         bill={bill}
         loadingProducts={loadingProducts}
@@ -97,75 +135,18 @@ export const TerminalSelectedPage: React.FC = () => {
         searchTerm={searchTerm}
         filteredProducts={filteredProducts}
         choseProduct={choseProduct}
+        goBack={() => {
+          if (toAddOrders.length > 0) {
+            setExitConfirm(true)
+          } else {
+            try {
+              navigate(-1)
+            } catch {
+              navigate('/terminal')
+            }
+          }
+        }}
       />
-      <Modal
-        title="Código do garçom"
-        open={!defaultCode && !savedCode}
-        onCancel={() => {}}
-        footer={null}
-        closeIcon={null}
-      >
-        <Form
-          layout="vertical"
-          onFinish={(values) => {
-            const code = values.code.trim()
-            setLoadingFindingCode(true)
-            api
-              .get('v1/desktop/find-employee/', {
-                params: {
-                  code
-                }
-              })
-              .then((response) => {
-                if (response.data) {
-                  setDefaultCode(code)
-                  setEmployeeName(response.data.name)
-                }
-              })
-              .catch(() => {
-                messageApi.error('Código inválido')
-              })
-              .finally(() => {
-                setLoadingFindingCode(false)
-              })
-          }}
-        >
-          <Form.Item
-            name="code"
-            required
-            rules={[{ required: true, message: 'Digite o código do garçom' }]}
-          >
-            <Input
-              className="custom-input"
-              type="password"
-              size="large"
-              placeholder="Digite o código do garçom"
-              autoComplete="off"
-              id="waiter-code-input"
-            />
-          </Form.Item>
-          <Form.Item>
-            <Flex gap="1rem" justify="end">
-              <Button
-                htmlType="submit"
-                type="primary"
-                size="large"
-                block
-                loading={loaingFindingCode}
-                onClick={() => {
-                  const inputElement = document.getElementById(
-                    'waiter-code-input'
-                  ) as HTMLInputElement
-                  inputElement?.focus()
-                }}
-              >
-                Salvar
-              </Button>
-            </Flex>
-          </Form.Item>
-        </Form>
-      </Modal>
-
       {window.innerWidth > 920 && (
         <Flex
           vertical
@@ -179,6 +160,7 @@ export const TerminalSelectedPage: React.FC = () => {
           <SearchBox
             placeholder="Buscar produto"
             type="text"
+            showKeyBoard={false}
             srtartFocus
             onArrow={() => {
               const buttonElement = document.getElementById(
@@ -191,7 +173,11 @@ export const TerminalSelectedPage: React.FC = () => {
               buttonElement?.focus()
             }}
             onTimeSearch={onSearch}
-            onSearch={() => {
+            onSearch={(value) => {
+              if (filteredProducts(value).length === 1) {
+                setSelectedProduct(filteredProducts(value)[0])
+                return
+              }
               const buttonElement = document.getElementById(
                 `button-product-${filteredProducts(searchTerm)[0]?.id}`
               )
@@ -202,18 +188,23 @@ export const TerminalSelectedPage: React.FC = () => {
               buttonElement?.focus()
             }}
           />
-          <OrdersResum loadingBill={loadingOrders} orders={orders} />
+          <OrdersResum
+            loadingBill={loadingOrders}
+            orders={orders}
+            toAddOrders={toAddOrders}
+            onOrdersChange={setToAddOrders}
+            onSuccess={() => {
+              fetchOrders(billId || '')
+            }}
+          />
         </Flex>
       )}
       <OrderModal
-        savedCode={defaultCode || savedCode}
         billId={billId || ''}
         selectedProduct={selectedProduct}
         onClose={() => setSelectedProduct(null)}
         onSuccess={(order) => {
-          setSelectedProduct(null)
-          setSearchTerm('')
-          setOrders((prev) => [order, ...prev])
+          setToAddOrders((prev) => [...prev, order])
         }}
       />
     </Container>
