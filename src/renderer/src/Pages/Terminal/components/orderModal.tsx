@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react'
-import { Order, Product } from '@renderer/types'
+import { Product } from '@renderer/types'
 import {
   Button,
   Flex,
@@ -13,18 +13,26 @@ import {
   Typography
 } from 'antd'
 import { ArrowDown, ArrowUp, Minus, Plus } from 'lucide-react'
-import api from '@renderer/services/api'
 import { currenyFormat } from '@renderer/utils'
-import { printOrderReceipt } from '@renderer/utils/Printers'
-import dayjs from 'dayjs'
 import { brlToNumber, formatToKilos } from '@renderer/utils/currency'
 const { Text } = Typography
+interface ToAddOrder {
+  bill: string
+  product: string
+  notes: string
+  status: string
+  quantity: number
+  product_name: string
+  complements: {
+    complement: string
+    quantity: number
+  }[]
+}
 interface OrderModalProps {
   selectedProduct: Product | null
   onClose: () => void
-  onSuccess?: (order: Order) => void
+  onSuccess?: (order: ToAddOrder) => void
   billId: string
-  savedCode?: string
 }
 interface ProductToAdd {
   bill: string
@@ -32,7 +40,6 @@ interface ProductToAdd {
   notes: string
   status: string
   quantity: number
-  code: string
 }
 
 interface ComplementToAdd {
@@ -121,8 +128,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
   selectedProduct,
   onClose,
   onSuccess,
-  billId,
-  savedCode
+  billId
 }) => {
   const [form] = Form.useForm()
   const [messageApi, contextHolder] = message.useMessage()
@@ -140,67 +146,25 @@ export const OrderModal: React.FC<OrderModalProps> = ({
       return quantity_for_group < minimum_required_complements
     })
   }, [complementsToAdd, selectedProduct])
+
   const onFinish = useCallback(
     (values: ProductToAdd) => {
-      if (loadingAdd) return
-      setLoadingAdd(true)
-      api
-        .post('v1/desktop/operation/orders/', {
-          ...values,
-          code: savedCode || values.code,
-          quantity: brlToNumber(values.quantity.toString()),
-          complements: complementsToAdd
-            .filter((c) => c.quantity > 0)
-            .map((c) => ({
-              complement: c.complement,
-              quantity: c.quantity
-            }))
-        })
-        .then((response) => {
-          const complements = response?.data?.complements_details || []
-          let complementsLine: string[] = []
-          if (Array.isArray(complements)) {
-            complementsLine = complements.map(
-              (c: {
-                complement_group_name: string
-                complements: { quantity: number; name: string }[]
-              }) =>
-                `${c.complement_group_name}: ${c.complements
-                  .map(
-                    (comp: { quantity: number; name: string }) => `${comp.quantity} ${comp.name}`
-                  )
-                  .join(', ')}`
-            )
-          }
-          const data = {
-            printerName: response.data?.printer_name,
-            order: {
-              number_id: response?.data?.number,
-              table: response?.data?.table_number,
-              identification: response?.data?.bill_identification,
-              bill_number: response?.data?.bill_number,
-              waiter: response?.data?.launched_by_name,
-              quantity: response?.data?.quantity,
-              product_name: response?.data?.product_name,
-              notes: response?.data?.notes,
-              date: dayjs(response?.data?.created).format('DD/MM/YYYY HH:mm:ss'),
-              complements: complementsLine
-            },
-            type: 'first' as 'first' | 'reprint'
-          }
-          if (response.data?.printer_name) {
-            printOrderReceipt(data)
-          }
-          setComplementsToAdd([])
-          messageApi.success('Produto adicionado com sucesso')
-          onSuccess?.(response.data)
-        })
-        .catch((err) => {
-          messageApi.error(err.response?.data?.detail || 'Erro ao adicionar produto')
-          setLoadingAdd(false)
-        })
+      onSuccess?.({
+        ...values,
+        product_name: selectedProduct?.name || '',
+        quantity: brlToNumber(values.quantity.toString()),
+        complements: complementsToAdd
+          .filter((c) => c.quantity > 0)
+          .map((c) => ({
+            complement: c.complement,
+            quantity: c.quantity
+          }))
+      })
+      setComplementsToAdd([])
+      setLoadingAdd(false)
+      onClose()
     },
-    [complementsToAdd, savedCode, messageApi, onSuccess, loadingAdd]
+    [complementsToAdd, onSuccess, onClose, selectedProduct]
   )
   useEffect(() => {
     window.api.onScaleWeight((_, weight) => {
@@ -384,12 +348,8 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                 className="custom-input-number"
                 onPressEnter={(e) => {
                   e.preventDefault()
-                  if (!savedCode) {
-                    form?.getFieldInstance('code')?.focus()
-                  } else {
-                    const buttonElement = document.getElementById('button-add-product')
-                    buttonElement?.focus()
-                  }
+                  const buttonElement = document.getElementById('button-add-product')
+                  buttonElement?.focus()
                 }}
               />
             </Form.Item>
@@ -439,57 +399,12 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                   }}
                   onPressEnter={(e) => {
                     e.preventDefault()
-                    if (!savedCode) {
-                      form?.getFieldInstance('code')?.focus()
-                    } else {
-                      const buttonElement = document.getElementById('button-add-product')
-                      buttonElement?.focus()
-                    }
+                    const buttonElement = document.getElementById('button-add-product')
+                    buttonElement?.focus()
                   }}
                 />
               </Form.Item>
             </Space.Compact>
-          )}
-          {!savedCode && (
-            <Form.Item
-              label="Código funcionário"
-              name="code"
-              required
-              style={{
-                maxWidth: 200,
-                marginBottom: 0
-              }}
-              rules={[
-                {
-                  required: true,
-                  message: 'Obrigatório'
-                }
-              ]}
-            >
-              <Input
-                type="password"
-                size="large"
-                className="custom-input"
-                placeholder="****"
-                autoComplete="new-password"
-                onPressEnter={(e) => {
-                  e.preventDefault()
-                  const buttonElement = document.getElementById('button-add-product')
-                  buttonElement?.focus()
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'ArrowLeft') {
-                    e.preventDefault()
-                    form?.getFieldInstance('quantity')?.focus()
-                  }
-                  if (e.key === 'ArrowUp') {
-                    e.preventDefault()
-                    const quantityElement = form?.getFieldInstance('notes')
-                    quantityElement?.focus()
-                  }
-                }}
-              />
-            </Form.Item>
           )}
           <Form.Item label="" style={{ flex: 1, marginBottom: 0 }}>
             <Button
@@ -502,11 +417,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'ArrowLeft') {
                   e.preventDefault()
-                  if (!savedCode) {
-                    form?.getFieldInstance('code')?.focus()
-                  } else {
-                    form?.getFieldInstance('quantity')?.focus()
-                  }
+                  form?.getFieldInstance('quantity')?.focus()
                 }
                 if (e.key === 'ArrowUp') {
                   e.preventDefault()

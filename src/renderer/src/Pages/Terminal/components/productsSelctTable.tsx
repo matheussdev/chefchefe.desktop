@@ -5,7 +5,6 @@ import { currenyFormat } from '@renderer/utils'
 import { Button, Flex, Form, message, Select, Skeleton, Space, Table, Typography } from 'antd'
 import { ChevronLeft, Save } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 const { Text } = Typography
 interface ProductsSelectTableProps {
   loadingBill: boolean
@@ -15,7 +14,7 @@ interface ProductsSelectTableProps {
   searchTerm: string
   filteredProducts: (searchTerm: string) => Product[]
   choseProduct: (product: Product) => void
-  waiterName?: string
+  goBack?: () => void
 }
 export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
   loadingBill,
@@ -25,9 +24,8 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
   searchTerm,
   filteredProducts,
   choseProduct,
-  waiterName
+  goBack
 }) => {
-  const navigate = useNavigate()
   const { tables, fetchTables } = useBill()
   const render = useRef(false)
   useEffect(() => {
@@ -38,6 +36,10 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
   }, [fetchTables])
   const [messageApi, contextHolder] = message.useMessage()
   const [loadingChangeTable, setLoadingChangeTable] = useState(false)
+  const categories = Array.from(
+    new Set(filteredProducts(searchTerm).map((product) => product.category))
+  )
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([])
   return (
     <Flex
       vertical
@@ -63,11 +65,7 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
           <Button
             icon={<ChevronLeft size={20} />}
             onClick={() => {
-              try {
-                navigate(-1)
-              } catch {
-                navigate('/terminal')
-              }
+              goBack?.()
             }}
             style={{ fontSize: '2rem' }}
             size="large"
@@ -85,18 +83,6 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
           >
             Comanda {bill?.number || bill?.identification || bill?.table_number || 'N/A'}
           </Text>
-          {waiterName && (
-            <Text
-              strong
-              style={{
-                marginLeft: 'auto',
-                marginRight: '0.5rem',
-                fontSize: '1.8rem'
-              }}
-            >
-              Garçom: {waiterName}
-            </Text>
-          )}
           <Form
             style={{ marginLeft: 'auto' }}
             onFinish={(values) => {
@@ -157,89 +143,131 @@ export const ProductsSelectTable: React.FC<ProductsSelectTableProps> = ({
       </Skeleton>
       <Table
         loading={loadingProducts || loadingBill}
-        dataSource={searchTerm ? filteredProducts(searchTerm) : products}
-        size="small"
+        dataSource={categories.map((category) => ({ category }))}
         pagination={false}
         scroll={{
           y: window.innerHeight - 220
         }}
         virtual
+        rowKey={(record) => record.category}
         onRow={(record) => {
           return {
-            onClick: () => {
-              choseProduct(record)
-            },
             style: {
               cursor: 'pointer'
             },
-            id: `product-${record.id}`,
-            onFocus: () => {
-              const element = document.getElementById(`product-${record.id}`)
-              element?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest'
-              })
+            onClick: () => {
+              if (expandedCategories.includes(record.category)) {
+                setExpandedCategories(expandedCategories.filter((cat) => cat !== record.category))
+              } else {
+                setExpandedCategories([record.category])
+              }
             }
           }
         }}
-        rowKey={(record) => record.id}
+        showHeader={false}
         columns={[
           {
-            title: 'Código',
-            dataIndex: 'code',
-            key: 'code',
-            width: 70,
-            render: (value) => value || '-'
-          },
-          {
-            title: 'Produto',
-            dataIndex: 'name',
-            key: 'name',
-            ellipsis: true,
-            render: (value, record, index) => (
-              <Button
-                type="text"
-                disabled={loadingBill || loadingProducts}
-                id={`button-product-${record.id}`}
-                size="large"
-                onKeyDown={(e) => {
-                  // aarow down key
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault()
-                    const nextElement = document.getElementById(
-                      `button-product-${searchTerm ? filteredProducts(searchTerm)[index + 1]?.id : products[index + 1]?.id}`
-                    )
-                    nextElement?.focus()
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault()
-                    const prevElement = document.getElementById(
-                      `button-product-${searchTerm ? filteredProducts(searchTerm)[index - 1]?.id : products[index - 1]?.id}`
-                    )
-                    prevElement?.focus()
-                  }
-                }}
-              >
-                <Text style={{ fontSize: '1.5rem', fontWeight: '500' }}> {value}</Text>
-              </Button>
-            )
-          },
-          {
-            title: 'Categoria',
+            title: 'Categorias',
             dataIndex: 'category',
             key: 'category',
-            render: (value) => <Text style={{ fontSize: '1.2rem' }}>{value || '-'}</Text>
-          },
-          {
-            title: 'Preço',
-            dataIndex: 'price',
-            key: 'price',
             render: (value) => (
-              <Text style={{ fontSize: '1.2rem' }}>
-                {value ? currenyFormat(Number(value)) : '-'}
-              </Text>
+              <Text style={{ fontSize: '1.5rem', fontWeight: '500' }}>{value}</Text>
             )
           }
         ]}
+        expandable={{
+          columnWidth: 50,
+          expandedRowKeys: expandedCategories,
+          expandedRowRender: (category) => {
+            const productsByCategory = filteredProducts(searchTerm).filter(
+              (product) => product.category === category.category
+            )
+            return (
+              <Table
+                loading={loadingProducts || loadingBill}
+                dataSource={productsByCategory}
+                size="small"
+                pagination={false}
+                onRow={(record) => {
+                  return {
+                    onClick: () => {
+                      choseProduct(record)
+                    },
+                    style: {
+                      cursor: 'pointer'
+                    },
+                    id: `product-${record.id}`,
+                    onFocus: () => {
+                      const element = document.getElementById(`product-${record.id}`)
+                      element?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest'
+                      })
+                    }
+                  }
+                }}
+                rowKey={(record) => record.id}
+                columns={[
+                  {
+                    title: 'Código',
+                    dataIndex: 'code',
+                    key: 'code',
+                    width: 70,
+                    render: (value) => value || '-'
+                  },
+                  {
+                    title: 'Produto',
+                    dataIndex: 'name',
+                    key: 'name',
+                    ellipsis: true,
+                    render: (value, record, index) => (
+                      <Button
+                        type="text"
+                        disabled={loadingBill || loadingProducts}
+                        id={`button-product-${record.id}`}
+                        size="large"
+                        onKeyDown={(e) => {
+                          // aarow down key
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault()
+                            const nextElement = document.getElementById(
+                              `button-product-${searchTerm ? filteredProducts(searchTerm)[index + 1]?.id : products[index + 1]?.id}`
+                            )
+                            nextElement?.focus()
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault()
+                            const prevElement = document.getElementById(
+                              `button-product-${searchTerm ? filteredProducts(searchTerm)[index - 1]?.id : products[index - 1]?.id}`
+                            )
+                            prevElement?.focus()
+                          }
+                        }}
+                      >
+                        <Text style={{ fontSize: '1.5rem', fontWeight: '500' }}> {value}</Text>
+                      </Button>
+                    )
+                  },
+                  // {
+                  //   title: 'Categoria',
+                  //   dataIndex: 'category',
+                  //   key: 'category',
+                  //   render: (value) => <Text style={{ fontSize: '1.2rem' }}>{value || '-'}</Text>
+                  // },
+                  {
+                    title: 'Preço',
+                    dataIndex: 'price',
+                    key: 'price',
+                    render: (value) => (
+                      <Text style={{ fontSize: '1.2rem' }}>
+                        {value ? currenyFormat(Number(value)) : '-'}
+                      </Text>
+                    )
+                  }
+                ]}
+              />
+            )
+          }
+        }}
       />
     </Flex>
   )
