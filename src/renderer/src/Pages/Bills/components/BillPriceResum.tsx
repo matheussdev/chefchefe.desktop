@@ -304,7 +304,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     city: restaurant?.city || '',
                     state: restaurant?.state || '',
                     zip: restaurant?.postal_code || '',
-                    phone: restaurant?.phone || ''
+                    phone: restaurant?.phone || '',
+                    cnpj: restaurant?.cnpj || ''
                   },
                   payments: datasend.payments.map((payment) => ({
                     method:
@@ -684,7 +685,8 @@ export const BillPriceResum: React.FC<BillPriceResumProps> = ({ subtotal, bills,
           city: restaurant?.city || '',
           state: restaurant?.state || '',
           zip: restaurant?.postal_code || '',
-          phone: restaurant?.phone || ''
+          phone: restaurant?.phone || '',
+          cnpj: restaurant?.cnpj || ''
         }
       }
       await printBillReceipt(data)

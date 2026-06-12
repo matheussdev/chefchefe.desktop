@@ -33,6 +33,7 @@ export interface Restaurant {
   state: string
   postal_code: string
   phone: string
+  cnpj?: string | null
 }
 
 export interface User {

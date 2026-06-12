@@ -25,10 +25,9 @@ export async function connectScale(path: string, boundRate: number = 9600): Prom
     console.log('Balança já conectada na porta', path)
     return true
   }
-
   currentPort = new SerialPort({
     path,
-    boundRate,
+    baudRate: boundRate,
     ...serialConfig
   })
 

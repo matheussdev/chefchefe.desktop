@@ -3,47 +3,32 @@ import { getConfig } from '@renderer/services/auth'
 import { Bill } from '@renderer/types'
 import { errorActions } from '@renderer/utils'
 import { Alert, Button, Form, Input, InputNumber, Modal, Select } from 'antd'
-import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { useHotkeys } from 'react-hotkeys-hook'
 
 interface BillFormPageProps {
   initialValue?: Bill
   onSuccess?: (bill: Bill) => void
+  open?: boolean
+  onClose?: () => void
+  onEndModal?: () => void
 }
-export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSuccess }) => {
-  const [open, setOpen] = useState(false)
+export const BillFormPage: React.FC<BillFormPageProps> = ({
+  initialValue,
+  onSuccess,
+  open,
+  onClose,
+  onEndModal
+}) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [form] = Form.useForm()
   const { tables, fetchTables, openBill } = useBill()
   const savedCode = getConfig('terminal-saved-code') || ''
-  useHotkeys(
-    ['n'],
-    (_, handler) => {
-      switch (handler.hotkey) {
-        case 'n':
-          setOpen(true)
-          break
-      }
-    },
-    { enableOnContentEditable: true, enableOnFormTags: true }
-  )
   return (
     <>
-      <Button
-        onClick={() => {
-          setOpen(true)
-        }}
-        icon={<Plus size={16} />}
-        type="dashed"
-        size="large"
-      >
-        Abrir comanda (N)
-      </Button>
       <Modal
         open={open}
-        onCancel={() => setOpen(false)}
+        onCancel={() => onClose?.()}
         footer={null}
         title="Abrir nova comanda"
         destroyOnHidden
@@ -52,6 +37,8 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
             fetchTables()
             form?.getFieldInstance('number')?.focus()
             setLoading(false)
+          } else {
+            onEndModal?.()
           }
         }}
       >
@@ -67,7 +54,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({ initialValue, onSucc
             })
               .then((bill) => {
                 form?.resetFields()
-
+                console.log('Nova comanda criada:', bill)
                 if (onSuccess) {
                   onSuccess(bill)
                 }
