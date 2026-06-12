@@ -92,7 +92,11 @@ export const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ cashierI
                 >
                   {currenyFormat(amount)}
                 </Title>
-                <Text type="secondary">{paymentsMap(item.method_type).title}</Text>
+                <Text type="secondary">
+                  {item.method_type === 'OTHER'
+                    ? item.payment_method_name
+                    : paymentsMap(item.method_type).title}
+                </Text>
               </Flex>
             )
           },

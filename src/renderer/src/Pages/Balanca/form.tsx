@@ -2,7 +2,7 @@ import { useBill } from '@renderer/hooks/useBills'
 import { getConfig } from '@renderer/services/auth'
 import { Bill } from '@renderer/types'
 import { errorActions } from '@renderer/utils'
-import { Alert, Button, Form, Input, InputNumber, Modal, Select } from 'antd'
+import { Alert, Button, Form, Input, InputNumber, Modal } from 'antd'
 import { useState } from 'react'
 
 interface BillFormPageProps {
@@ -22,7 +22,7 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [form] = Form.useForm()
-  const { tables, fetchTables, openBill } = useBill()
+  const { openBill } = useBill()
   const savedCode = getConfig('terminal-saved-code') || ''
   return (
     <>
@@ -34,7 +34,6 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({
         destroyOnHidden
         afterOpenChange={(open) => {
           if (open) {
-            fetchTables()
             form?.getFieldInstance('number')?.focus()
             setLoading(false)
           } else {
@@ -48,7 +47,6 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({
             setLoading(true)
             openBill({
               number: values.number,
-              table: values.table,
               identification: values.identification,
               code: savedCode ? savedCode : values.code
             })
@@ -114,49 +112,15 @@ export const BillFormPage: React.FC<BillFormPageProps> = ({
               placeholder="ex: Comanda do João"
               onPressEnter={(e) => {
                 e.preventDefault()
-                form?.getFieldInstance('table')?.focus()
+                window.document.getElementById('button-open-bill')?.focus()
               }}
               onKeyDown={(e) => {
                 if (e.key === 'ArrowDown') {
                   e.preventDefault()
-                  form?.getFieldInstance('table')?.focus()
+                  window.document.getElementById('button-open-bill')?.focus()
                 } else if (e.key === 'ArrowUp') {
                   e.preventDefault()
                   form?.getFieldInstance('number')?.focus()
-                }
-              }}
-            />
-          </Form.Item>
-          <Form.Item name="table" label="Mesa">
-            <Select
-              size="large"
-              placeholder="Selecione uma mesa"
-              options={[
-                { label: 'Sem mesa', value: null },
-                ...tables.map((table) => ({
-                  label: 'Mesa ' + table.number,
-                  value: table.id,
-                  number: table.number
-                }))
-              ]}
-              style={{ fontSize: '1.3rem', fontWeight: '500', width: '100%' }}
-              allowClear
-              showSearch={{
-                optionFilterProp: 'number'
-              }}
-              onSelect={() => {
-                if (savedCode) {
-                  window.document.getElementById('button-open-bill')?.focus()
-                } else {
-                  form?.getFieldInstance('code')?.focus()
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowUp') {
-                  e.preventDefault()
-                  if (savedCode) {
-                    form?.getFieldInstance('identification')?.focus()
-                  }
                 }
               }}
             />
