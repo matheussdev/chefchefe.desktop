@@ -17,13 +17,11 @@ function sendToRenderer(channel: string, payload?: unknown): void {
 }
 
 export async function listScalePorts(): Promise<SerialPort[]> {
-  console.log(await SerialPort.list())
   return await SerialPort.list()
 }
 
 export async function connectScale(path: string, boundRate: number = 9600): Promise<boolean> {
   if (currentPort?.isOpen && currentPort.path === path) {
-    console.log('Balança já conectada na porta', path)
     return true
   }
   currentPort = new SerialPort({
@@ -40,9 +38,6 @@ export async function connectScale(path: string, boundRate: number = 9600): Prom
 
   currentPort.on('open', () => {
     console.log('BALANÇA CONECTADA')
-    currentPort?.write(Buffer.from([0x05]), (err) => {
-      console.log('ENQ enviado', err)
-    })
   })
 
   currentPort.on('data', (data) => {
@@ -61,8 +56,6 @@ export async function connectScale(path: string, boundRate: number = 9600): Prom
     const grams = parseInt(payload, 10)
 
     const kg = grams / 1000
-
-    console.log('Peso:', kg)
 
     sendToRenderer('scale:weight', kg)
   })
@@ -103,7 +96,6 @@ export async function requestWeight(): Promise<boolean> {
   const enq = Buffer.from([0x05])
 
   currentPort.write(enq)
-  console.log('Solicitado peso da balança')
   return true
 }
 
