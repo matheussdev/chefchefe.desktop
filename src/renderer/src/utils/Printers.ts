@@ -156,6 +156,7 @@ export async function printBillReceipt(payload: {
     state: string
     zip: string
     phone: string
+    cnpj: string
   }
   payments?: {
     method: string
@@ -203,6 +204,13 @@ export async function printBillReceipt(payload: {
   lines.push({
     type: 'text',
     value: restaurant.phone,
+    style: {
+      textAlign: 'left'
+    }
+  })
+  lines.push({
+    type: 'text',
+    value: `CNPJ: ${restaurant.cnpj}`,
     style: {
       textAlign: 'left'
     }

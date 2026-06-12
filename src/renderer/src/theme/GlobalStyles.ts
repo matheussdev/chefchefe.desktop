@@ -85,5 +85,21 @@ html {
     font-weight: 500 !important;
 }
 
+.custom-input-lg {
+    font-size: 1.7rem !important;
+    height: 57px !important;
+    font-weight: 600 !important;
+}
+
+.custom-input-lg .ant-input {
+    font-size: 1.7rem !important;
+    font-weight: 600 !important;
+}
+.custom-button-lg {
+    font-size: 1.3rem !important;
+    height: 57px !important;
+    font-weight: 600 !important;
+}
+
 `
 export default GlobalStyle

@@ -1,0 +1,1 @@
+export { BalancaPage } from './balanca'

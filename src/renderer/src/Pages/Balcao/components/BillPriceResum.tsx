@@ -164,7 +164,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, orders }) => {
                 tax: 0,
                 total: datasend.total,
                 total_received: datasend.total_received,
-                change: datasend.change
+                change: datasend.change,
+                discount: 0
               },
               items: orders.map((order) => ({
                 name: order.product_name,
@@ -177,7 +178,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ values, orders }) => {
                 city: restaurant?.city || '',
                 state: restaurant?.state || '',
                 zip: restaurant?.postal_code || '',
-                phone: restaurant?.phone || ''
+                phone: restaurant?.phone || '',
+                cnpj: restaurant?.cnpj || ''
               },
               payments: datasend.payments.map((payment) => ({
                 method:

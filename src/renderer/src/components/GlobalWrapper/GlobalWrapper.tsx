@@ -14,7 +14,8 @@ import {
   Settings,
   ShoppingBasket,
   Store,
-  User
+  User,
+  Weight
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@renderer/hooks/useAuth'
@@ -47,6 +48,13 @@ const menu = [
     icon: <MonitorUp />,
     path: '/terminal',
     permission: 'TERMINAL'
+  },
+  {
+    key: 'balanca',
+    label: 'Balança',
+    icon: <Weight />,
+    path: '/balanca',
+    permission: 'BALANCA'
   },
   {
     key: 'balcao',

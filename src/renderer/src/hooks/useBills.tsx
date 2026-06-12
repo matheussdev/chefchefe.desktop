@@ -2,7 +2,7 @@ import api from '@renderer/services/api'
 import { getCache, setCache } from '@renderer/services/auth'
 import { Bill, Table, Product, BillDetail } from '@renderer/types'
 import { errorActions } from '@renderer/utils'
-import { createContext, type ReactNode, useCallback, useContext, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from 'react'
 
 interface BillProviderProps {
   children: ReactNode
@@ -135,8 +135,10 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
         })
     })
   }, [])
-
+  const creatingRef = useRef(false)
   const openBill = useCallback(async (params: OpenBillParams): Promise<BillDetail> => {
+    if (creatingRef.current) return [] as unknown as BillDetail
+    creatingRef.current = true
     return new Promise<BillDetail>((resolve, reject) => {
       api
         .post('v1/desktop/operation/bills/', {
@@ -158,10 +160,12 @@ export function BillProvider({ children }: Readonly<BillProviderProps>): React.J
             return newBills
           })
           setSelectedBill(res.data)
+          creatingRef.current = false
           resolve(res.data)
         })
         .catch((error) => {
           errorActions(error)
+          creatingRef.current = false
           reject(error.response?.data?.detail || 'Erro ao criar comanda')
         })
     })
