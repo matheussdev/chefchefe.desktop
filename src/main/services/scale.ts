@@ -17,6 +17,7 @@ function sendToRenderer(channel: string, payload?: unknown): void {
 }
 
 export async function listScalePorts(): Promise<SerialPort[]> {
+  console.log(await SerialPort.list())
   return await SerialPort.list()
 }
 
@@ -27,34 +28,43 @@ export async function connectScale(path: string, boundRate: number = 9600): Prom
   }
   currentPort = new SerialPort({
     path,
+    ...serialConfig,
     baudRate: boundRate,
-    ...serialConfig
+    dataBits: 8,
+    stopBits: 1,
+    parity: 'none',
+    rtscts: false,
+    xon: false,
+    xoff: false
   })
 
   currentPort.on('open', () => {
     console.log('BALANÇA CONECTADA')
+    currentPort?.write(Buffer.from([0x05]), (err) => {
+      console.log('ENQ enviado', err)
+    })
   })
 
-  let value = ''
-
   currentPort.on('data', (data) => {
-    if (!data) return
-
-    // byte ETX = fim da transmissão
-    if (data[0] === 0x03) {
-      const cleaned = value.replace(/[^0-9]/g, '')
-
-      const kg = parseFloat(cleaned || '0') / 1000
-
-      sendToRenderer('scale:weight', kg)
-
-      console.log('Peso final:', kg)
-
-      value = '' // limpa buffer
+    // protocolo:
+    // STX + S + PPPPP + ETX
+    if (data.length < 3) {
       return
     }
 
-    value += data.toString()
+    if (data[0] !== 0x02 || data[data.length - 1] !== 0x03) {
+      return
+    }
+
+    const payload = data.toString('ascii').replace('\x02', '').replace('\x03', '').trim()
+
+    const grams = parseInt(payload, 10)
+
+    const kg = grams / 1000
+
+    console.log('Peso:', kg)
+
+    sendToRenderer('scale:weight', kg)
   })
 
   currentPort.on('error', (err) => {
@@ -93,7 +103,7 @@ export async function requestWeight(): Promise<boolean> {
   const enq = Buffer.from([0x05])
 
   currentPort.write(enq)
-
+  console.log('Solicitado peso da balança')
   return true
 }
 

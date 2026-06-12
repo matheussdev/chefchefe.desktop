@@ -35,6 +35,15 @@ export const OrdersSelectTable: React.FC<OrdersSelectTableProps> = ({
         loading={loadingProducts}
         dataSource={orders}
         size="small"
+        title={() => (
+          <Flex align="center" justify="space-between">
+            <Text>Pedidos lançados</Text>
+            <Text style={{ marginLeft: '0.5rem' }}>
+              Total:{' '}
+              {currenyFormat(orders.reduce((acc, order) => acc + Number(order.total_price), 0))}
+            </Text>
+          </Flex>
+        )}
         pagination={false}
         onRow={(record) => {
           return {

@@ -6,6 +6,7 @@ import { printOrderBillReceipt } from '@renderer/utils/Printers'
 import { Button, Flex, Form, Input, message, Modal, Table, Typography } from 'antd'
 import { SendHorizonal, Trash2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 const { Text } = Typography
 
 interface ToAddOrder {
@@ -38,6 +39,7 @@ export const OrdersResum: React.FC<OrdersResumProps> = ({
   const savedCode = getConfig('terminal-saved-code') || ''
   const [loadingAdd, setLoadingAdd] = useState(false)
   const [confirmModal, setConfirmModal] = useState(false)
+  const navigate = useNavigate()
   const finishOrders = useCallback(
     async (values) => {
       if (loadingAdd) return
@@ -58,9 +60,7 @@ export const OrdersResum: React.FC<OrdersResumProps> = ({
           })
           messageApi.success('Pedidos enviados com sucesso')
           onSuccess?.(result.flatMap((r) => r.orders))
-          onOrdersChange?.([])
-          setLoadingAdd(false)
-          setConfirmModal(false)
+          navigate('/terminal')
         })
         .catch((err) => {
           errorActions(err)
@@ -68,7 +68,7 @@ export const OrdersResum: React.FC<OrdersResumProps> = ({
           messageApi.error(err?.response?.data?.detail || 'Erro ao enviar pedidos')
         })
     },
-    [savedCode, toAddOrders, loadingAdd, messageApi, onOrdersChange, onSuccess]
+    [savedCode, toAddOrders, loadingAdd, messageApi, onSuccess, navigate]
   )
 
   const [form] = Form.useForm()

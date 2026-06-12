@@ -120,10 +120,9 @@ export const BalancaPage: React.FC = () => {
   }, [messageApi])
   const [openNewBillModal, setOpenNewBillModal] = useState(false)
   const onCreateBillSuccess = useCallback(
-    (bill) => {
+    async (bill) => {
       setOpenNewBillModal(false)
       const newBillId = bill.id
-      console.log('Nova comanda criada:', bill)
       form?.setFieldsValue({
         bill: newBillId,
         quantity: ''
@@ -132,9 +131,17 @@ export const BalancaPage: React.FC = () => {
       fetchBills({
         is_open: true
       })
+      if (await window.api.checkConnectScale()) {
+        await window.api.requestWeight()
+        const buttonElement = document.getElementById('button-add-product')
+        buttonElement?.focus()
+      } else {
+        messageApi.error('Balança desconectada')
+        form.getFieldInstance('quantity')?.focus()
+      }
       fetchOrders(newBillId)
     },
-    [fetchOrders, form, fetchBills]
+    [fetchOrders, form, fetchBills, messageApi]
   )
   useHotkeys(
     ['n'],
